@@ -1,0 +1,16 @@
+import os
+from snakemake.utils import min_version
+min_version("6.12")
+
+configfile: "config/config.yaml"
+
+include: "rules/common.smk"
+include: "rules/io.smk"
+
+onstart:
+    make_output_dir(f"{os.getcwd()}/{config['output_dir']}")
+
+rule all:
+    input:
+        # This function is located in workflow/rules/common.smk
+        get_final_output()
