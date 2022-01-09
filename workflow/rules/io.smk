@@ -2,18 +2,11 @@ import os
 
 rule gunzip:    
     input:
-        in_bar = "{prefix}_barcodes.tsv.gz",
-        in_gene = "{prefix}_genes.tsv.gz",
-        in_mat = "{prefix}_matrix.mtx.gz"    
+        "{prefix}.gz" 
     output:
-        out_bar = f"{config['output_dir']}/{{prefix}}_barcodes.tsv",
-        out_gene = f"{config['output_dir']}/{{prefix}}_genes.tsv",
-        out_mat = f"{config['output_dir']}/{{prefix}}_matrix.mtx"    
+        f"{config['output_dir']}/{{prefix}}"    
     shell:
-        "gunzip -c {input.in_bar} > {output.out_bar}"
-        "&& gunzip -c {input.in_gene} > {output.out_gene}"
-        "&& gunzip -c {input.in_mat} > {output.out_mat}"
-
+        "gunzip -c {input} > {output}"
 
 rule h5ad:
     input:
