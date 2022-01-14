@@ -1,0 +1,6 @@
+all:
+  - "barcodes.tsv"
+  - "genes.tsv"
+  - "matrix.mtx"
+  - "mtx.h5ad"
+  - "mtx_seurat.h5ad"

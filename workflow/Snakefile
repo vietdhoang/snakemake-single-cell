@@ -1,11 +1,16 @@
 import os
+import sys
 from snakemake.utils import min_version
 min_version("6.12")
 
-configfile: "config/config.yaml"
+sys.path.insert(0, f"{workflow.basedir}/scripts")
+
+configfile: f"{workflow.basedir}/../config/config.yaml"
+configfile: f"{workflow.basedir}/../config/all_outputs.yaml"
 
 include: "rules/common.smk"
 include: "rules/io.smk"
+include: "rules/qc.smk"
 
 onstart:
     make_output_dir(f"{os.getcwd()}/{config['output_dir']}")

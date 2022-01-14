@@ -3,10 +3,11 @@ import scanpy as sc
 import sys
 
 from anndata._core.anndata import AnnData
-from typing import Union, NoReturn
+from typing import Union
 
 
-def read_count_matrix(path: Union[str, bytes, os.PathLike]) -> AnnData:
+def read_count_matrix(path: Union[str, bytes, os.PathLike], 
+                      prefix: str = None) -> AnnData:
     '''Read in count matrix
 
     TODO:
@@ -22,7 +23,7 @@ def read_count_matrix(path: Union[str, bytes, os.PathLike]) -> AnnData:
     '''
 
     if os.path.isdir(path):
-        adata = sc.read_10x_mtx(path, var_names='gene_symbols')
+        adata = sc.read_10x_mtx(path, var_names='gene_symbols', prefix=prefix)
 
     elif os.path.splitext(path)[1] == '.h5ad':
         adata = sc.read_10x_h5(path)
@@ -36,7 +37,7 @@ def read_count_matrix(path: Union[str, bytes, os.PathLike]) -> AnnData:
 
 def mtx_to_h5ad(path: Union[str, bytes, os.PathLike],
                 path_out: Union[str, bytes, os.PathLike],
-                prefix: str = None) -> NoReturn:
+                prefix: str = None) -> None:
     '''Convert a count matrix in '.mtx' format to '.h5ad' format.
 
     TODO:
@@ -44,17 +45,13 @@ def mtx_to_h5ad(path: Union[str, bytes, os.PathLike],
         log
     
     Args:
-        path: Path to directory cotaining barcode.tsv, genes.tsv, and matrix.mtx
+        path: Path to directory containing barcode.tsv, genes.tsv, and matrix.mtx
         path_out: Path where the '.h5ad' file will be written.
+        prefix: Prefix for barcode.tsv.gz, genes.tsv.gz and matrix.mtx.gz files.
+            ex. 'subject1_barcode.tsv.gz' -> prefix is 'subject1_'
     '''
     
-    if os.path.isdir(path):
-        adata = sc.read_10x_mtx(path, var_names='gene_symbols', prefix=prefix)
-
-    else:
-        print("Error: Input needs to be a directory for count matrix", 
-              file=sys.stderr)              
-        exit(1)
+    adata = read_count_matrix(path, prefix=prefix)
     
     if os.path.splitext(path_out)[1] == '.h5ad':          
         adata.write(path_out)

@@ -1,9 +1,11 @@
+input:
+  - "GSM4932159_sample1_barcodes.tsv.gz"
+  - "GSM4932159_sample1_genes.tsv.gz"
+  - "GSM4932159_sample1_matrix.mtx.gz"
 
 output_dir: "snakemake-single-cell-out"
 
-feature-barcode-matrix: 
-  - "GSM4932159_sample1_barcodes.tsv"
-  - "GSM4932159_sample1_genes.tsv"
-  - "GSM4932159_sample1_matrix.mtx"
+output_prefix: "GSM4932159_sample1_"
 
-h5ad_file: "GSM4932159_sample1.h5ad"
+outputs: 
+  - "all"
