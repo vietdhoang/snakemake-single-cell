@@ -8,6 +8,7 @@ from scipy.sparse import spmatrix
 from anndata._core.anndata import AnnData
 from typing import Callable, Union
 
+
 class DataMatrixTransform:
     
     def __init__(self, func: Callable, X: Union[AnnData, ndarray, spmatrix],
@@ -34,6 +35,7 @@ class DimReduce(DataMatrixTransform):
 
 
 class Cluster(DataMatrixTransform):
+
 
     def __init__(self, func: Callable, X: Union[AnnData, ndarray, spmatrix], 
                  *func_args, **func_kwargs) -> None:

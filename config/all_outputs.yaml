@@ -1,6 +1,10 @@
+# All possible outputs from this workflow when given a feature-barcode matrix.
 all:
   - "barcodes.tsv"
   - "genes.tsv"
   - "matrix.mtx"
   - "mtx.h5ad"
   - "mtx_seurat.h5ad"
+  - "mtx_seurat_pca.h5ad"
+  - "mtx_seurat_umap.h5ad"
+  - "mtx_seurat_tsne.h5ad"
