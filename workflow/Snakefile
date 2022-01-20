@@ -9,8 +9,7 @@ configfile: f"{workflow.basedir}/../config/config.yaml"
 configfile: f"{workflow.basedir}/../config/all_outputs.yaml"
 
 include: "rules/common.smk"
-include: "rules/io.smk"
-include: "rules/qc.smk"
+include: "rules/preproc.smk"
 include: "rules/dim_reduce.smk"
 
 onstart:

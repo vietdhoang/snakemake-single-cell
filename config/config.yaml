@@ -19,4 +19,5 @@ output_prefix: "GSM4932159_sample1_"
 # List all the desired outputs. If "all" is given, then all outputs will be 
 # selected. See config/all_outputs.yaml to see all output files.
 outputs: 
-  - "all"
+  # - "all"
+   - "mtx.h5ad"
