@@ -1,3 +1,25 @@
+wildcard_constraints:
+    # A prefix can be anything that doesn't contain a '\', '/', or a whitespace
+    prefix = "[^\\/\s]*"
+
+
+rule gunzip:    
+    input:
+        in_bar = "{prefix}barcodes.tsv.gz",
+        in_gene ="{prefix}genes.tsv.gz",
+        in_mtx = "{prefix}matrix.mtx.gz" 
+    output:
+        out_bar = temp("{prefix}barcodes.tsv"),
+        out_gene = temp("{prefix}genes.tsv"),
+        out_mtx = temp("{prefix}matrix.mtx")    
+    shell:
+        (
+            "gunzip -c {input.in_bar} > {output.out_bar} "
+            "&& gunzip -c {input.in_gene} > {output.out_gene} "
+            "&& gunzip -c {input.in_mtx} > {output.out_mtx} "
+        )
+
+
 rule mtx_to_h5ad:
     input:
         "{prefix}barcodes.tsv",
@@ -19,23 +41,30 @@ rule mtx_to_h5ad:
         )
 
 
-use rule mtx_to_h5ad as mtx_compressed_to_h5ad with:
+use rule mtx_to_h5ad as mtx_to_h5ad_features_compressed with:
     input:
         "{prefix}barcodes.tsv.gz",
-        "{prefix}genes.tsv.gz",
+        "{prefix}features.tsv.gz",
         "{prefix}matrix.mtx.gz"
+
+
+use rule mtx_to_h5ad as mtx_to_h5ad_features_uncompressed with:
+    input:
+        "{prefix}barcodes.tsv",
+        "{prefix}features.tsv",
+        "{prefix}matrix.mtx"
 
 
 rule qc_seurat:
     input:
         config['output_dir'] + "/{prefix}mtx.h5ad"
     output:
-        config['output_dir'] + "/{prefix}mtx_seurat.h5ad"
+        config['output_dir'] + "/{prefix}mtx_qcseurat.h5ad"
     conda:
         "../envs/scanpy.yaml"
     shell:
         (       
-            f"python -m fire {{workflow.basedir}}/scripts/qc.py qc_seurat " 
-            f"--path='{config['output_dir']}/{{wildcards.prefix}}mtx.h5ad' "
-            f"--path_out='{config['output_dir']}/{{wildcards.prefix}}mtx_seurat.h5ad' "
+            f"python {{workflow.basedir}}/scripts/preproc.py qc_seurat " 
+            f"--path={{input:q}} "
+            f"--path_out={{output:q}}"
         )

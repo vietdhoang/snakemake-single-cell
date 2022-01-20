@@ -14,10 +14,10 @@ output_dir: "snakemake-single-cell-out"
 # The prefix that will be prepended to every output file. Provide an empty 
 # string if no prefix is desired.
 # TODO: Future functionality -- automatically determine prefix from input files.
+# output_prefix: "GSM4932159_sample1_"
 output_prefix: "GSM4932159_sample1_"
 
 # List all the desired outputs. If "all" is given, then all outputs will be 
 # selected. See config/all_outputs.yaml to see all output files.
 outputs: 
-  # - "all"
-   - "mtx.h5ad"
+  - "all"
