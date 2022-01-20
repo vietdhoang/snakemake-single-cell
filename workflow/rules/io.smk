@@ -24,7 +24,7 @@ rule h5ad:
     conda:
         "../envs/scanpy.yaml"
     shell: 
-        (       
+        (   
             f"python -m fire {{workflow.basedir}}/scripts/io.py mtx_to_h5ad " 
             f"--path='{config['output_dir']}' "
             f"--path_out='{config['output_dir']}/{{wildcards.prefix}}_mtx.h5ad' "

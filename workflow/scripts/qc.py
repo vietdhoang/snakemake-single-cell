@@ -4,8 +4,7 @@ from anndata._core.anndata import AnnData
 from typing import Union
 
 
-def plot_qc_metrics(adata: AnnData, 
-                    path_dir_out: Union[str, bytes, os.PathLike]) -> None:
+def plot_qc_metrics(adata: AnnData) -> None:
     '''Plot QC metrics.
 
     Args:
@@ -15,7 +14,8 @@ def plot_qc_metrics(adata: AnnData,
     '''
     
     adata.var['mt'] = adata.var_names.str.startswith('MT-')
-    adata = sc.calculate_qc_metrics
+    sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, 
+                                       log1p=False, inplace=True)
 
     sc.pl.violin(
         adata, 
@@ -47,6 +47,8 @@ def qc_seurat(path: Union[str, bytes, os.PathLike],
     
     # Read in input file 
     adata = sc.read_h5ad(path)
+
+    plot_qc_metrics(adata)
 
     # Used scanpy's Seurat recipe for the QC 
     sc.pp.recipe_seurat(adata)

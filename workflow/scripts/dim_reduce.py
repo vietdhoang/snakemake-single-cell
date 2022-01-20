@@ -1,6 +1,5 @@
 import os
 import scanpy as sc
-
 from anndata._core.anndata import AnnData
 from typing import Union
 
@@ -28,7 +27,7 @@ def pca(path: Union[str, bytes, os.PathLike],
     # Plot PCA results if the option is selected
     if get_plots:
         sc.pl.pca(adata, save=True)
-        sc.pl.pca_variance_ratio(adata, log=True)
+        sc.pl.pca_variance_ratio(adata, log=False, save=True)
     
     # Write out PCA results if the option is selected
     if path_out:
@@ -72,7 +71,7 @@ def umap(path: Union[str, bytes, os.PathLike],
 
     # Plot results if the option is selected.
     if get_plots:
-        sc.pl.umap(adata)
+        sc.pl.umap(adata, save=True)
 
     # Write out UMAP results if the option is selected
     if path_out:
@@ -112,7 +111,7 @@ def tsne(path: Union[str, bytes, os.PathLike],
 
     # Plot results if the option is selected.
     if get_plots:
-        sc.pl.tsne(adata)
+        sc.pl.tsne(adata, save=True)
 
     # Write out tSNE results if the option is selected
     if path_out:
