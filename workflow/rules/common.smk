@@ -1,5 +1,4 @@
 import os
-import sys
 from typing import List, Union
 
 
@@ -21,29 +20,65 @@ def get_final_output() -> List[str]:
         List of strings where each element is an output file
     '''
     
-    # Get the output directory and prefix from config file
-    output_dir = config['output_dir']
-    output_prefix = config['output_prefix']
+    # Each of these conditions evaluate to True if they exist in the config file
+    # and are not empty.
+    qc_condition = 'qc_method' in config and config['qc_method']
+    dr_condition = 'dim_reduce_method' in config and config['dim_reduce_method']
+    cluster_condition = 'cluster_method' in config and config['cluster_method']
+    output_condition = 'output' in config and config['output']
     
-    final_output = []
-    
-    # Loop through the outputs.
-    for output in config['outputs']:
+    final_output = []   # List of desired output files
 
-        # If the output contains all, then go to the 'all' entry in 
-        # all_outputs.yaml and add all possible output files.
-        if output == 'all':
-            final_output.extend(
-                expand(f"{output_dir}/{output_prefix}{{dataset}}", 
-                       dataset=config['all'])
+    # If the user selected qc, dimensionality reduction and clustering
+    if qc_condition and dr_condition and cluster_condition:
+        
+        # Here we only add the clustering outputs to final_output because
+        # Snakemake will automatically produce all other upstream files, such as
+        # the dimensionality reduction outputs.
+        final_output.extend(
+            expand(
+                (f"{config['output_dir']}/cluster/"
+                 f"{config['output_prefix']}mtx_{{qc}}_{{dimred}}_{{cluster}}.h5ad"),
+                 qc=config['qc_method'],
+                 dimred=config['dim_reduce_method'],
+                 cluster=config['cluster_method']
             )
-
-            return final_output        
-
+        )
     
-    final_output.extend(
-        expand(f"{output_dir}/{output_prefix}{{dataset}}", 
-               dataset=config['outputs'])
-    )
+    # If the user selected qc and dimensionality reduction only
+    elif qc_condition and dr_condition:
+
+        # Here we only add the dimensionality reduction outputs to final_output
+        # for the same reason as above.
+        final_output.extend(
+            expand(
+                (f"{config['output_dir']}/dim_reduce/"
+                 f"{config['output_prefix']}mtx_{{qc}}_{{dimred}}.h5ad"),
+                 qc=config['qc_method'],
+                 dimred=config['dim_reduce_method']
+            )
+        )
     
+    # If the user selected qc only
+    elif qc_condition:
+
+        # Add only qc outputs to final_output
+        final_output.extend(
+            expand(
+                (f"{config['output_dir']}/qc/"
+                 f"{config['output_prefix']}mtx_{{qc}}.h5ad"),
+                 qc=config['qc_method']
+            )
+        )
+
+    # Takes everything from other_outputs in the config file and appends it
+    # to the list of final outputs.
+    if output_condition:
+        final_output.extend(
+            expand(
+                f"{config['output_dir']}/{{output}}", 
+                output=config['other_outputs']
+            )
+        )
+        
     return final_output

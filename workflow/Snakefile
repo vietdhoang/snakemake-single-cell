@@ -3,7 +3,6 @@ from snakemake.utils import min_version
 min_version("6.12")
 
 configfile: f"{workflow.basedir}/../config/config.yaml"
-configfile: f"{workflow.basedir}/../config/all_outputs.yaml"
 
 include: "rules/common.smk"
 include: "rules/preproc.smk"

@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+  
+dependencies:
+  - python=3.8
+  - fire=0.4.0
+  - scanpy=1.8.2
+  - leidenalg=0.8.8
+  - matplotlib=3.5.1
+  - altair=4.2.0
