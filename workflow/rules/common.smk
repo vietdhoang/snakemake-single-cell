@@ -2,14 +2,14 @@ import os
 from typing import List, Union
 
 
-def make_output_dir(out_dir: Union[str, bytes, os.PathLike]) -> None:
+def make_output_dir(dir_out: Union[str, bytes, os.PathLike]) -> None:
     '''Create an output directory for the pipeline if none exist
 
     Args:
-        out_dir: output path for the directory
+        dir_out: output path for the directory
     '''
-    if not os.path.exists(out_dir):
-        os.mkdir(out_dir)
+    if not os.path.exists(dir_out):
+        os.mkdir(dir_out)
 
 
 def get_final_output() -> List[str]:
@@ -22,15 +22,15 @@ def get_final_output() -> List[str]:
     
     # Each of these conditions evaluate to True if they exist in the config file
     # and are not empty.
-    qc_condition = 'qc_method' in config and config['qc_method']
-    dr_condition = 'dim_reduce_method' in config and config['dim_reduce_method']
-    cluster_condition = 'cluster_method' in config and config['cluster_method']
-    output_condition = 'output' in config and config['output']
+    exist_qc = 'qc_method' in config and config['qc_method']
+    exist_dr = 'dim_reduce_method' in config and config['dim_reduce_method']
+    exist_cluster = 'cluster_method' in config and config['cluster_method']
+    exist_other_output = 'other_outputs' in config and config['other_outputs']
     
     final_output = []   # List of desired output files
 
     # If the user selected qc, dimensionality reduction and clustering
-    if qc_condition and dr_condition and cluster_condition:
+    if exist_qc and exist_dr and exist_cluster:
         
         # Here we only add the clustering outputs to final_output because
         # Snakemake will automatically produce all other upstream files, such as
@@ -46,7 +46,7 @@ def get_final_output() -> List[str]:
         )
     
     # If the user selected qc and dimensionality reduction only
-    elif qc_condition and dr_condition:
+    elif exist_qc and exist_dr:
 
         # Here we only add the dimensionality reduction outputs to final_output
         # for the same reason as above.
@@ -60,7 +60,7 @@ def get_final_output() -> List[str]:
         )
     
     # If the user selected qc only
-    elif qc_condition:
+    elif exist_qc:
 
         # Add only qc outputs to final_output
         final_output.extend(
@@ -73,7 +73,7 @@ def get_final_output() -> List[str]:
 
     # Takes everything from other_outputs in the config file and appends it
     # to the list of final outputs.
-    if output_condition:
+    if exist_other_output:
         final_output.extend(
             expand(
                 f"{config['output_dir']}/{{output}}", 
