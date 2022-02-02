@@ -1,0 +1,19 @@
+input:
+  - "pbmc3k_barcodes.tsv.gz"
+  - "pbmc3k_sample1_genes.tsv.gz"
+  - "pbmc3k_sample1_matrix.mtx.gz"
+
+output_dir: "snakemake-single-cell-out"
+
+output_prefix: "pbmc3k_"
+
+qc_method:
+  - "noqc"
+
+dim_reduce_method:
+  - "umap"
+
+cluster_method:
+  - "leiden"
+
+

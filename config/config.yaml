@@ -7,6 +7,8 @@ input:
   - "pbmc3k_sample1_genes.tsv.gz"
   - "pbmc3k_sample1_matrix.mtx.gz"
 
+labels: "labels.csv"
+
 # Name of output directory. The path must be either absolute or relative to the
 # working directory
 output_dir: "snakemake-single-cell-out"
@@ -38,6 +40,39 @@ dim_reduce_method:
 cluster_method:
   - "leiden"
   - "louvain"
+
+
+# NOTE: Future feature
+# Plot the results of qc, dimensionality reduction, and clustering
+plot_method:
+
+  graph:
+    
+    use_labels: True
+    
+    dim_reduce:
+      - "pca"
+      - "umap"
+      - "tsne"
+    
+    cluster:
+      - "leiden"
+      - "louvain"
+  
+  tree:
+
+    use_labels: True
+
+    dim_reduce:
+      - "pca"
+      - "umap"
+      - "tsne"
+    
+    cluster:
+      - "leiden"
+      - "louvain"
+
+
 
 # Alternatively, list the desired output files. This requires knowledge of the 
 # output directory structure and the file naming conventions for this workflow.
