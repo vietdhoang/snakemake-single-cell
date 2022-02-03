@@ -7,7 +7,11 @@ input:
   - "pbmc3k_genes.tsv.gz"
   - "pbmc3k_matrix.mtx.gz"
 
-labels: "labels.csv"
+label_file: 
+  file: "labels.csv"
+  labels:
+    - "lab-1"
+    - "lab-2"
 
 # Name of output directory. The path must be either absolute or relative to the
 # working directory
@@ -47,28 +51,22 @@ cluster_method:
 # Plot the results of qc, dimensionality reduction, and clustering
 plot_method:
 
-  graph:
-    
-    use_labels: True
-    
+  scatter:    
+    use_labels: True    
     dim_reduce:
       - "pca"
       - "umap"
-      - "tsne"
-    
+      - "tsne"    
     cluster:
       - "leiden"
       - "louvain"
   
   tree:
-
     use_labels: True
-
     dim_reduce:
       - "pca"
       - "umap"
-      - "tsne"
-    
+      - "tsne"    
     cluster:
       - "leiden"
       - "louvain"

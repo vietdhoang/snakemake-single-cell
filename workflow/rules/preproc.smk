@@ -1,10 +1,10 @@
 ruleorder: mtx_to_h5ad_genes > mtx_to_h5ad 
 
 wildcard_constraints:
-    # A prefix can be anything that doesn't contain a 
+    # A wildcard can be anything that doesn't contain a 
     # '\', '.',  '/', or a whitespace
     prefix = "[^\\/\.\s]*",
-     qc_method = "[^\\/\.\s]*"
+    qc_method = "[^\\/\.\s]*"
 
 
 # Converts gene-barcode matricies to h5ad format
