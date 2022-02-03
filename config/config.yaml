@@ -4,8 +4,8 @@
 # working directory.
 input:
   - "pbmc3k_barcodes.tsv.gz"
-  - "pbmc3k_sample1_genes.tsv.gz"
-  - "pbmc3k_sample1_matrix.mtx.gz"
+  - "pbmc3k_genes.tsv.gz"
+  - "pbmc3k_matrix.mtx.gz"
 
 labels: "labels.csv"
 
@@ -33,6 +33,7 @@ dim_reduce_method:
   - "pca"
   - "umap"
   - "tsne"
+
 
 # List the clustering method(s) that will be used.
 # Each method must correspond EXACTLY to a function in scripts/cluster.py

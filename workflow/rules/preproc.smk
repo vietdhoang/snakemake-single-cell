@@ -1,6 +1,42 @@
+ruleorder: mtx_to_h5ad_genes > mtx_to_h5ad 
+
 wildcard_constraints:
-    # A prefix can be anything that doesn't contain a '\', '/', or a whitespace
-    prefix = "[^\\/\s]*"
+    # A prefix can be anything that doesn't contain a 
+    # '\', '.',  '/', or a whitespace
+    prefix = "[^\\/\.\s]*",
+     qc_method = "[^\\/\.\s]*"
+
+
+# Converts gene-barcode matricies to h5ad format
+rule mtx_to_h5ad:
+    input:
+        config['input']    
+    output:
+        config['output_dir'] + "/{prefix}mtx.h5ad"
+    conda:
+        "../envs/preproc.yaml"
+    params:
+        path_in = ".",
+        path_out = config['output_dir'] + "/{prefix}mtx.h5ad",
+        labels = config['labels'] if 'labels' in config and config['labels'] else None
+    shell: 
+        (   
+            f"python {{workflow.basedir}}/scripts/preproc.py mtx_to_h5ad " 
+            f"--path={{params.path_in:q}} "
+            f"--path_out={{params.path_out:q}} "
+            f"--prefix='{{wildcards.prefix}}' "
+            f"--path_lab={{params.labels}}"
+        )
+
+
+# Adapts mtx_to_h5ad to work with uncompressed gene-barcode matrices
+# This is part of a work-around for a bug on scanpy where it cannot process
+# compressed gene-barcode matrices. This rule comes right after gunzip.
+use rule mtx_to_h5ad as mtx_to_h5ad_genes with:
+    input:
+        "{prefix}barcodes.tsv",
+        "{prefix}genes.tsv",
+        "{prefix}matrix.mtx"
 
 
 # Uncompresses gene-barcode matricies
@@ -19,44 +55,6 @@ rule gunzip:
             "&& gunzip -c {input.in_gene} > {output.out_gene} "
             "&& gunzip -c {input.in_mtx} > {output.out_mtx} "
         )
-
-
-# Converts gene-barcode matricies to h5ad format
-rule mtx_to_h5ad:
-    input:
-        "{prefix}barcodes.tsv",
-        "{prefix}genes.tsv",
-        "{prefix}matrix.mtx"
-    output:
-        config['output_dir'] + "/{prefix}mtx.h5ad"
-    conda:
-        "../envs/preproc.yaml"
-    params:
-        path_in = ".",
-        path_out = config['output_dir'] + "/{prefix}mtx.h5ad"
-    shell: 
-        (   
-            f"python {{workflow.basedir}}/scripts/preproc.py mtx_to_h5ad " 
-            f"--path={{params.path_in:q}} "
-            f"--path_out={{params.path_out:q}} "
-            f"--prefix='{{wildcards.prefix}}'"
-        )
-
-
-# Adapts mtx_to_h5ad to work with compressed feature-barcode matricies
-use rule mtx_to_h5ad as mtx_to_h5ad_features_compressed with:
-    input:
-        "{prefix}barcodes.tsv.gz",
-        "{prefix}features.tsv.gz",
-        "{prefix}matrix.mtx.gz"
-
-
-# Adapts mtx_to_h5ad to work with uncompressed feature-barcode matricies
-use rule mtx_to_h5ad as mtx_to_h5ad_features_uncompressed with:
-    input:
-        "{prefix}barcodes.tsv",
-        "{prefix}features.tsv",
-        "{prefix}matrix.mtx"
 
 
 # The rule for quality control.

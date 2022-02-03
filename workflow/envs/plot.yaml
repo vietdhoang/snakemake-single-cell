@@ -1,9 +1,8 @@
 channels:
   - conda-forge
-  
+
 dependencies:
   - python=3.8
   - altair=4.2.0
   - fire=0.4.0
-  - multicore-tsne=0.1
   - scanpy=1.8.2

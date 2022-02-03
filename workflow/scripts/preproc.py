@@ -1,6 +1,7 @@
 import altair as alt
 import fire
 import os
+import pandas as pd
 import scanpy as sc
 import sys
 
@@ -19,7 +20,8 @@ alt.themes.enable("publish_theme")
 
 def mtx_to_h5ad(path: Union[str, bytes, os.PathLike],
                 path_out: Union[str, bytes, os.PathLike],
-                prefix: str = None) -> None:
+                prefix: str = None,
+                path_lab: Union[str, bytes, os.PathLike] = None) -> None:
     '''Convert a count matrix in '.mtx' format to '.h5ad' format.
 
     TODO:
@@ -31,10 +33,18 @@ def mtx_to_h5ad(path: Union[str, bytes, os.PathLike],
         path_out: Path where the '.h5ad' file will be written.
         prefix: Prefix for barcode.tsv.gz, genes.tsv.gz and matrix.mtx.gz files.
             ex. 'subject1_barcode.tsv.gz' -> prefix is 'subject1_'
+        path_lab: Optionally provide a path to a label file which will be
+            incorporated into the AnnData for analysis.
     '''
     
     adata = sc.read_10x_mtx(path, var_names='gene_symbols', prefix=prefix)
     
+    if path_lab:
+        df_labels = pd.read_csv(path_lab)
+
+        for col_name in df_labels.columns[1:]:
+            adata.obs[f"lab_{col_name}"] = df_labels[col_name]
+
     if os.path.splitext(path_out)[1] == '.h5ad':          
         adata.write(path_out)
     
