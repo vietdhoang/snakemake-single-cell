@@ -2,6 +2,29 @@ import os
 from typing import List, Union
 
 
+def get_wc_constraint(key: str) -> str:
+    '''Determine wildcard constraints for wildcards that are dependent on
+    entries in the config file. For example, the qc wildcard should be
+    constrained to the entries under qc_method in the config file.
+
+    Args:
+        key: A key for the config dictionary
+    
+    Returns:
+        A regex string that defines the wild constraint associated with
+        config[key]
+    '''    
+    if exists(key, config):
+        constraint = "|".join(config[key])
+        return f"({constraint})"
+    
+    # If key does not exist in the config file, return the regex below instead.
+    # This is the default regex: anything that doesn't contain a 
+    # '\', '.',  '/', or a whitespace
+    else:
+        return "[^\\/\.\s]*"
+
+
 def make_output_dir(dir_out: Union[str, bytes, os.PathLike]) -> None:
     '''Create an output directory for the pipeline if none exist
 
@@ -14,7 +37,14 @@ def make_output_dir(dir_out: Union[str, bytes, os.PathLike]) -> None:
 
 def exists(key: str, dictionary: dict) -> bool:
     '''Helper function to determine if a key exists in a 
-    dictionary and isn't empty
+    dictionary and isn't empty.
+
+    Args:
+        key: A key that is potentially in the dictionary
+        dictionary: the dictionary that will be searched
+    
+    Returns:
+        True if the key exists in the dictionary and the entry is not empty.
     '''
     return key in dictionary and dictionary[key]
 
@@ -27,35 +57,44 @@ def get_plots() -> List[str]:
         List of strings where each element is a plot file
     '''
 
+    if not exists('plot_method', config):
+        return []
+
     plot_output = []
 
     if (exists('scatter', config['plot_method']) 
-        and exists('dim_reduce', config)
+        and exists('dim_reduce_method', config)
         and exists('dim_reduce', config['plot_method']['scatter'])):
         
-        if exists('label_file', config):
+        if (exists('label_file', config) 
+            and config['plot_method']['scatter']['use_labels']):
             for dr in config['plot_method']['scatter']['dim_reduce']:
-                for label in config['label_file']['label']:
-                    plot_output.append(
-                        (f"{config['output_dir']}/figures/labels"
-                         f"{config['output_prefix']}scatter_{dr}_{label}.html")
+                for label in config['label_file']['labels']:
+                    plot_output.extend(
+                        expand(
+                            (f"{config['output_dir']}/figures/labels/"
+                             f"{config['output_prefix']}scatter_{{qc}}_{dr}_{label}.html"),
+                            qc=config['qc_method']
+                        )                 
                     )
             
         else:
             plot_output.extend(
                 expand(
-                    (f"{config['output_dir']}/figures/dim_reduce"
-                     f"{config['output_prefix']}scatter_{{dr}}.html"), 
-                    dr=configconfig['plot_method']['scatter']['dim_reduce']
+                    (f"{config['output_dir']}/figures/no_labels/"
+                     f"{config['output_prefix']}scatter_{{qc}}_{{dr}}.html"),
+                    qc=config['qc_method'], 
+                    dr=config['plot_method']['scatter']['dim_reduce']
                 )
             )        
         
         if (exists('cluster', config['plot_method']['scatter']) 
-            and exists('cluster', config)):            
+            and exists('cluster_method', config)):            
             plot_output.extend(
                 expand(
-                    (f"{config['output_dir']}/figures/cluster_assignments"
-                     f"{config['output_prefix']}scatter_{{dr}}_{{c}}.html"), 
+                    (f"{config['output_dir']}/figures/cluster_assignments/"
+                     f"{config['output_prefix']}scatter_{{qc}}_{{dr}}_{{c}}.html"), 
+                    qc=config['qc_method'],
                     dr=config['plot_method']['scatter']['dim_reduce'],
                     c=config['plot_method']['scatter']['cluster'] 
                 )
@@ -94,7 +133,7 @@ def get_final_output() -> List[str]:
     
     # If the user selected qc and dimensionality reduction only
     elif (exists('qc_method', config) 
-          and exists('dim_reduce_method', config):
+          and exists('dim_reduce_method', config)):
 
         # Here we only add the dimensionality reduction outputs to final_output
         # for the same reason as above.
@@ -108,7 +147,7 @@ def get_final_output() -> List[str]:
         )
     
     # If the user selected qc only
-     elif (exists('qc_method', config):
+    elif (exists('qc_method', config)):
 
         # Add only qc outputs to final_output
         final_output.extend(
@@ -121,7 +160,7 @@ def get_final_output() -> List[str]:
 
     # Takes everything from other_outputs in the config file and appends it
     # to the list of final outputs.
-    if (exists('other_outputs', config):
+    if (exists('other_outputs', config)):
         final_output.extend(
             expand(
                 f"{config['output_dir']}/{{output}}", 
@@ -132,3 +171,18 @@ def get_final_output() -> List[str]:
     final_output.extend(get_plots())
         
     return final_output
+
+
+def list_to_str(l: List[str]) -> str:
+    '''Helper function that converts a list to a string literal. This is used
+    to help Fire to parse lists as input in the command line. See rule scatter
+    in rules/plot.smk for an example.
+
+    Args:
+        l: list of strings that will be converted into a string
+    
+    Returns:
+        The list as a string
+    '''
+    l_str = ",".join(l)
+    return f"\"[{l_str}]\""

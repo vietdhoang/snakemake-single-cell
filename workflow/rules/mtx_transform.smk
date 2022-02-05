@@ -1,11 +1,3 @@
-wildcard_constraints:
-    # A wildcard can be anything that doesn't contain a 
-    # '\', '.',  '/', or a whitespace
-    prefix = "[^\\/\.\s]*",
-    qc_method = "[^\\/\.\s]*",
-    dr_method = "[^\\/\.\s]*"
-
-
 # Compute the neighbourhood graph. This is required for some dimensionality
 # reduction and clustering methods.
 rule neighbourhood_graph:

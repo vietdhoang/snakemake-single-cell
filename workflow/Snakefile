@@ -7,9 +7,21 @@ configfile: f"{workflow.basedir}/../config/config.yaml"
 include: "rules/common.smk"
 include: "rules/preproc.smk"
 include: "rules/mtx_transform.smk"
+include: "rules/plot.smk"
+
+
+wildcard_constraints:
+    # A can be anything that doesn't contain a 
+    # '\', '.',  '/', or a whitespace
+    prefix = "[^\\/\.\s]*",
+    qc_method = get_wc_constraint('qc_method'),
+    dr_method = get_wc_constraint('dim_reduce_method'),
+    c_method = get_wc_constraint('cluster_method')
+
 
 onstart:
     make_output_dir(f"{os.getcwd()}/{config['output_dir']}")
+
 
 rule all:
     input:

@@ -10,8 +10,8 @@ input:
 label_file: 
   file: "labels.csv"
   labels:
-    - "lab-1"
-    - "lab-2"
+    - "label1"
+    - "label2"
 
 # Name of output directory. The path must be either absolute or relative to the
 # working directory
@@ -26,8 +26,9 @@ output_prefix: "pbmc3k_"
 # List the qc method(s) that will be used. If this is left empty or is deleted,
 # then the entire pipeline will be determined by the files in other_outputs
 qc_method:
-  - "noqc"
+  # - "noqc"
   - "seurat"
+  - "tutorial"
 
 # List the dimensionality reduction method(s) that will be used.
 # Each method must correspond EXACTLY to a function in scripts/dim_reduce.py
@@ -52,7 +53,7 @@ cluster_method:
 plot_method:
 
   scatter:    
-    use_labels: True    
+    use_labels: True   
     dim_reduce:
       - "pca"
       - "umap"
@@ -70,7 +71,6 @@ plot_method:
     cluster:
       - "leiden"
       - "louvain"
-
 
 
 # Alternatively, list the desired output files. This requires knowledge of the 

@@ -1,11 +1,16 @@
-import altair as alt
 import fire
 import os
-import pandas as pd
 import scanpy as sc
 import sys
 
 from typing import Union
+
+# Add the scripts directory to Python path and import local files in scripts/
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+from scripts.custom.custom_cluster import *
+
+# Set verbosity to 1 which means only print out errors
+sc.settings.verbosity = 1
 
 
 def leiden(path_in: Union[str, bytes, os.PathLike], 

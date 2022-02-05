@@ -6,7 +6,7 @@ import scanpy as sc
 import sys
 
 from anndata._core.anndata import AnnData
-from typing import Union
+from typing import List, Union
 
 # Add the scripts directory to Python path and import local files in scripts/
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -17,11 +17,15 @@ from scripts.custom.custom_qc import *
 alt.themes.register("publish_theme", scripts.altair_themes.publish_theme)
 alt.themes.enable("publish_theme")
 
+# Set verbosity to 1 which means only print out errors
+sc.settings.verbosity = 1
+
 
 def mtx_to_h5ad(path: Union[str, bytes, os.PathLike],
                 path_out: Union[str, bytes, os.PathLike],
                 prefix: str = None,
-                path_lab: Union[str, bytes, os.PathLike] = None) -> None:
+                path_label: Union[str, bytes, os.PathLike] = None,
+                labels: List[str] = None) -> None:
     '''Convert a count matrix in '.mtx' format to '.h5ad' format.
 
     TODO:
@@ -33,17 +37,19 @@ def mtx_to_h5ad(path: Union[str, bytes, os.PathLike],
         path_out: Path where the '.h5ad' file will be written.
         prefix: Prefix for barcode.tsv.gz, genes.tsv.gz and matrix.mtx.gz files.
             ex. 'subject1_barcode.tsv.gz' -> prefix is 'subject1_'
-        path_lab: Optionally provide a path to a label file which will be
+        path_label: Optionally provide a path to a label file which will be
             incorporated into the AnnData for analysis.
+        labels: List of labels from the label file that will be included in
+            the analysis
     '''
-    
+
     adata = sc.read_10x_mtx(path, var_names='gene_symbols', prefix=prefix)
     
-    if path_lab:
-        df_labels = pd.read_csv(path_lab)
-
-        for col_name in df_labels.columns[1:]:
-            adata.obs[f"lab_{col_name}"] = df_labels[col_name]
+    if path_label:
+        df_labels = pd.read_csv(path_label, index_col=0)
+        
+        for col_name in labels:
+            adata.obs[col_name] = df_labels[col_name].astype('category')
 
     if os.path.splitext(path_out)[1] == '.h5ad':          
         adata.write(path_out)

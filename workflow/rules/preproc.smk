@@ -1,11 +1,5 @@
 ruleorder: mtx_to_h5ad_genes > mtx_to_h5ad 
 
-wildcard_constraints:
-    # A wildcard can be anything that doesn't contain a 
-    # '\', '.',  '/', or a whitespace
-    prefix = "[^\\/\.\s]*",
-    qc_method = "[^\\/\.\s]*"
-
 
 # Converts gene-barcode matricies to h5ad format
 rule mtx_to_h5ad:
@@ -18,14 +12,16 @@ rule mtx_to_h5ad:
     params:
         path_in = ".",
         path_out = config['output_dir'] + "/{prefix}mtx.h5ad",
-        labels = config['labels'] if 'labels' in config and config['labels'] else None
+        path_label = config['label_file']['file'] if exists('label_file', config) else None,
+        labels = list_to_str(config['label_file']['labels']) if exists('label_file', config) else None
     shell: 
         (   
             f"python {{workflow.basedir}}/scripts/preproc.py mtx_to_h5ad " 
             f"--path={{params.path_in:q}} "
             f"--path_out={{params.path_out:q}} "
-            f"--prefix='{{wildcards.prefix}}' "
-            f"--path_lab={{params.labels}}"
+            f"--prefix={{wildcards.prefix:q}} "
+            f"--path_label={{params.path_label:q}} "
+            f"--labels={{params.labels}}"
         )
 
 
