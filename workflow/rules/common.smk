@@ -68,15 +68,15 @@ def get_plots() -> List[str]:
         
         if (exists('label_file', config) 
             and config['plot_method']['scatter']['use_labels']):
-            for dr in config['plot_method']['scatter']['dim_reduce']:
-                for label in config['label_file']['labels']:
-                    plot_output.extend(
-                        expand(
-                            (f"{config['output_dir']}/figures/labels/"
-                             f"{config['output_prefix']}scatter_{{qc}}_{dr}_{label}.html"),
-                            qc=config['qc_method']
-                        )                 
-                    )
+            plot_output.extend(
+                expand(
+                    (f"{config['output_dir']}/figures/labels/"
+                     f"{config['output_prefix']}scatter_{{qc}}_{{dr}}_{{l}}.html"),
+                    qc=config['qc_method'],
+                    dr=config['plot_method']['scatter']['dim_reduce'],
+                    l=config['label_file']['labels']
+                )                 
+            )
             
         else:
             plot_output.extend(
