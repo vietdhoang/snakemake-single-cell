@@ -2,26 +2,19 @@
 
 # User-defined input. The path must be either absolute or relative to the 
 # working directory.
-input:
-  - "pbmc3k_barcodes.tsv.gz"
-  - "pbmc3k_genes.tsv.gz"
-  - "pbmc3k_matrix.mtx.gz"
+input: "data_pbmc/"
 
-label_file: 
-  file: "labels.csv"
+label_file:
+  # File path must be either absolute or relative to the working directory
+  file: "data_pbmc/labels.csv"
+  # Labels in the label file that will be used
   labels:
     - "label1"
     - "label2"
 
 # Name of output directory. The path must be either absolute or relative to the
 # working directory
-output_dir: "snakemake-single-cell-out"
-
-# The prefix that will be prepended to every output file. Provide an empty 
-# string if no prefix is desired.
-# TODO: Future functionality -- automatically determine prefix from input files.
-# output_prefix: "GSM4932159_sample1_"
-output_prefix: "pbmc3k_"
+output_dir: "data_pbmc/snakemake-single-cell-out"
 
 # List the qc method(s) that will be used. If this is left empty or is deleted,
 # then the entire pipeline will be determined by the files in other_outputs

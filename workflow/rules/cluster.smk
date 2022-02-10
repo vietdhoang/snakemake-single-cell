@@ -4,11 +4,11 @@
 # to perform the clustering. The function is specified by the c_method wildcard.
 rule cluster:
     input:
-        config['output_dir'] + "/dim_reduce/{prefix}mtx_{qc_method}_{dr_method}.h5ad"
+        f"{config['output_dir']}/dim_reduce/mtx_{{qc_method}}_{{dr_method}}.h5ad"
     output:
         # c_method must be a name of a function in cluster.py because
         # it will be used to call that function
-        config['output_dir'] + "/cluster/{prefix}mtx_{qc_method}_{dr_method}_{c_method}.h5ad"
+        f"{config['output_dir']}/cluster/mtx_{{qc_method}}_{{dr_method}}_{{c_method}}.h5ad"
     conda:
         "../envs/cluster.yaml"
     shell:
@@ -20,18 +20,18 @@ rule cluster:
         )
 
 
-rule tmc_make_tree:
-    input:
-        config['input']
-    output:
-        (f"{config['output_dir']}/too-many-cells/"
-         f"{config['too-many-cells'][{{mktree_key}}]['output']}/{{mktree_key}}.done")
+# rule tmc_make_tree:
+#     input:
+#         config['input']
+#     output:
+#         (f"{config['output_dir']}/too-many-cells/"
+#          f"{config['too-many-cells'][{{mktree_key}}]['output']}/{{mktree_key}}.done")
     
-    params:
-        parameters = get_maketree_params()
+#     params:
+#         parameters = get_maketree_params()
     
-    shell:
-        (      
-            f"too-many-cells make-tree {*params.parameters}" 
-            f"> {config[{{wildcards.mktree_key}}]}"
-        )
+#     shell:
+#         (      
+#             f"too-many-cells make-tree {*params.parameters}" 
+#             f"> {config[{{wildcards.mktree_key}}]}"
+#         )

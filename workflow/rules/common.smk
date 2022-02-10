@@ -25,16 +25,6 @@ def get_wc_constraint(key: str) -> str:
         return "[^\\/\.\s]*"
 
 
-def make_output_dir(dir_out: Union[str, bytes, os.PathLike]) -> None:
-    '''Create an output directory for the pipeline if none exist
-
-    Args:
-        dir_out: output path for the directory
-    '''
-    if not os.path.exists(dir_out):
-        os.mkdir(dir_out)
-
-
 def exists(key: str, dictionary: dict) -> bool:
     '''Helper function to determine if a key exists in a 
     dictionary and isn't empty.
@@ -71,7 +61,7 @@ def get_plots() -> List[str]:
             plot_output.extend(
                 expand(
                     (f"{config['output_dir']}/figures/labels/"
-                     f"{config['output_prefix']}scatter_{{qc}}_{{dr}}_{{l}}.html"),
+                     f"scatter_{{qc}}_{{dr}}_{{l}}.html"),
                     qc=config['qc_method'],
                     dr=config['plot_method']['scatter']['dim_reduce'],
                     l=config['label_file']['labels']
@@ -82,7 +72,7 @@ def get_plots() -> List[str]:
             plot_output.extend(
                 expand(
                     (f"{config['output_dir']}/figures/no_labels/"
-                     f"{config['output_prefix']}scatter_{{qc}}_{{dr}}.html"),
+                     f"scatter_{{qc}}_{{dr}}.html"),
                     qc=config['qc_method'], 
                     dr=config['plot_method']['scatter']['dim_reduce']
                 )
@@ -93,7 +83,7 @@ def get_plots() -> List[str]:
             plot_output.extend(
                 expand(
                     (f"{config['output_dir']}/figures/cluster_assignments/"
-                     f"{config['output_prefix']}scatter_{{qc}}_{{dr}}_{{c}}.html"), 
+                     f"scatter_{{qc}}_{{dr}}_{{c}}.html"), 
                     qc=config['qc_method'],
                     dr=config['plot_method']['scatter']['dim_reduce'],
                     c=config['plot_method']['scatter']['cluster'] 
@@ -124,7 +114,7 @@ def get_final_output() -> List[str]:
         final_output.extend(
             expand(
                 (f"{config['output_dir']}/cluster/"
-                 f"{config['output_prefix']}mtx_{{qc}}_{{dimred}}_{{cluster}}.h5ad"),
+                 f"mtx_{{qc}}_{{dimred}}_{{cluster}}.h5ad"),
                 qc=config['qc_method'],
                 dimred=config['dim_reduce_method'],
                 cluster=config['cluster_method']
@@ -139,8 +129,7 @@ def get_final_output() -> List[str]:
         # for the same reason as above.
         final_output.extend(
             expand(
-                (f"{config['output_dir']}/dim_reduce/"
-                 f"{config['output_prefix']}mtx_{{qc}}_{{dimred}}.h5ad"),
+                f"{config['output_dir']}/dim_reduce/mtx_{{qc}}_{{dimred}}.h5ad",
                 qc=config['qc_method'],
                 dimred=config['dim_reduce_method']
             )
@@ -152,8 +141,7 @@ def get_final_output() -> List[str]:
         # Add only qc outputs to final_output
         final_output.extend(
             expand(
-                (f"{config['output_dir']}/qc/"
-                 f"{config['output_prefix']}mtx_{{qc}}.h5ad"),
+                f"{config['output_dir']}/qc/mtx_{{qc}}.h5ad",
                 qc=config['qc_method']
             )
         )

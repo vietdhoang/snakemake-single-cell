@@ -21,9 +21,8 @@ alt.themes.enable("publish_theme")
 sc.settings.verbosity = 1
 
 
-def mtx_to_h5ad(path: Union[str, bytes, os.PathLike],
+def mtx_to_h5ad(path_in: Union[str, bytes, os.PathLike],
                 path_out: Union[str, bytes, os.PathLike],
-                prefix: str = None,
                 path_label: Union[str, bytes, os.PathLike] = None,
                 labels: List[str] = None) -> None:
     '''Convert a count matrix in '.mtx' format to '.h5ad' format.
@@ -43,7 +42,7 @@ def mtx_to_h5ad(path: Union[str, bytes, os.PathLike],
             the analysis
     '''
 
-    adata = sc.read_10x_mtx(path, var_names='gene_symbols', prefix=prefix)
+    adata = sc.read_10x_mtx(path_in, var_names='gene_symbols')
     
     if path_label:
         df_labels = pd.read_csv(path_label, index_col=0)
