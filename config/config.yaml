@@ -9,8 +9,8 @@ label_file:
   file: "data_pbmc/labels.csv"
   # Labels in the label file that will be used
   labels:
-    - "label1"
-    - "label2"
+    - "label"
+    # - "label2"
 
 # Name of output directory. The path must be either absolute or relative to the
 # working directory
@@ -19,51 +19,124 @@ output_dir: "data_pbmc/snakemake-single-cell-out"
 # List the qc method(s) that will be used. If this is left empty or is deleted,
 # then the entire pipeline will be determined by the files in other_outputs
 qc_method:
-  # - "noqc"
+  - "noqc"
   - "seurat"
   - "tutorial"
 
-# List the dimensionality reduction method(s) that will be used.
-# Each method must correspond EXACTLY to a function in scripts/dim_reduce.py
-# If this is left empty or is deleted, dimensionality reduction as well as 
-# everything downstream will not run (ex. clustering).
-dim_reduce_method:
-  - "pca"
-  - "umap"
-  - "tsne"
+# # List the dimensionality reduction method(s) that will be used.
+# # Each method must correspond EXACTLY to a function in scripts/dim_reduce.py
+# # If this is left empty or is deleted, dimensionality reduction as well as 
+# # everything downstream will not run (ex. clustering).
+# dim_reduce_method:
+#   - "pca"
+#   - "umap"
+#   - "tsne"
 
 
-# List the clustering method(s) that will be used.
-# Each method must correspond EXACTLY to a function in scripts/cluster.py
-# If this is left empty or is deleted, no clustering will be performed.
-cluster_method:
-  - "leiden"
-  - "louvain"
+# # List the clustering method(s) that will be used.
+# # Each method must correspond EXACTLY to a function in scripts/cluster.py
+# # If this is left empty or is deleted, no clustering will be performed.
+# cluster_method:
+#   - "leiden"
+#   - "louvain"
+
+
+# too-many-cells:
+
+#   make-tree-1:
+#     filter-tresholds: "(100, 1)"
+#     draw-collection: "PieRing"
+#     output: "out1"
+#     stdout: "clusters.csv"
+  
+#   make-tree-2:
+#     prior: "out1"
+#     smart-cutoff: 4
+#     min-size: 1
+#     draw-collection: "PieRing"
+#     draw-node-number: 
+#     dendrogram-output: "tree-node-numbers.svg"
+#     output: "out1_pruned"
+#     stdout: "clusters_pruned.csv"
+
+#   make-tree-3:
+#     filter-tresholds: "(200, 1)"
+#     draw-collection: "PieChart"
+#     output: "out2"
+#     stdout: "clusters.csv"
+
+# too-many-cells:
+
+#   make-tree-1:    
+#       options:
+#         other:    
+#           - "--filter-tresholds \"(200, 1)\""
+#           - "--draw-collection \"PieRing\""
+  
+#   make-tree-2:    
+#     prior: "make-tree-1"    
+    
+#     options:
+#       output:
+#         dendrogram-output: "tree-node-numbers.svg"
+#       comb:
+#         smart-cutoff: [4, 6]
+#         min-size: [1, 4]
+#       other:
+#         - "--draw-collection: \"PieRing\""
+#         - "--draw-node-number" 
+
+#   make-tree-3:
+#     options:
+#       other:    
+#         - "--filter-tresholds \"(100, 1)\""
+#         - "--draw-collection \"PieRing\""
+
+too-many-cells:
+
+  make-tree-1:    
+    options:    
+      - --filter-thresholds "(200, 1)"
+      - --draw-collection "PieRing"
+  
+  make-tree-2:    
+    prior: "make-tree-1"
+    options:
+      - --draw-node-number
+      - --dendrogram-output "tree-node-numbers.svg"
+      - --draw-collection "PieRing"
+      - --min-size 1
+      - --smart-cutoff 4
+
+  make-tree-3:
+    options:    
+      - --filter-thresholds "(100, 1)"
+      - --draw-collection "PieRing"
 
 
 # NOTE: Future feature
 # Plot the results of qc, dimensionality reduction, and clustering
-plot_method:
+# plot_method:
 
-  scatter:    
-    use_labels: True   
-    dim_reduce:
-      - "pca"
-      - "umap"
-      - "tsne"    
-    cluster:
-      - "leiden"
-      - "louvain"
+#   scatter:    
+#     use_labels: True   
+#     dim_reduce:
+#       - "pca"
+#       - "umap"
+#       - "tsne"    
+#     cluster:
+#       - "leiden"
+#       - "louvain"
   
-  tree:
-    use_labels: True
-    dim_reduce:
-      - "pca"
-      - "umap"
-      - "tsne"    
-    cluster:
-      - "leiden"
-      - "louvain"
+#   tree:
+#     use_labels: True
+#     dim_reduce:
+#       - "pca"
+#       - "umap"
+#       - "tsne"    
+#     cluster:
+#       - "leiden"
+#       - "louvain"
 
 
 # Alternatively, list the desired output files. This requires knowledge of the 

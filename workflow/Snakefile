@@ -4,6 +4,7 @@ min_version("6.12")
 
 configfile: f"{workflow.basedir}/../config/config.yaml"
 
+include: "rules/config_file.smk"
 include: "rules/common.smk"
 include: "rules/preproc.smk"
 include: "rules/dim_reduce.smk"
@@ -16,7 +17,9 @@ wildcard_constraints:
     # '\', '.',  '/', or a whitespace
     qc_method = get_wc_constraint('qc_method'),
     dr_method = get_wc_constraint('dim_reduce_method'),
-    c_method = get_wc_constraint('cluster_method')
+    c_method = get_wc_constraint('cluster_method'),
+    prior = "[^\\/\.\s]*",
+    maketree = "[^\\/\.\s]*"
 
 
 onstart:
