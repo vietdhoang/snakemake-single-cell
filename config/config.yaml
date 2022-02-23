@@ -114,8 +114,8 @@ cluster_method:
 #       - --draw-collection "PieRing"
 
 
-# NOTE: Future feature
-# Plot the results of qc, dimensionality reduction, and clustering
+# # NOTE: Future feature
+# # Plot the results of qc, dimensionality reduction, and clustering
 plot_method:
 
   scatter:    

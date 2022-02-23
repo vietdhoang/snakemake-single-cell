@@ -5,10 +5,11 @@ import pandas as pd
 import scanpy as sc
 import sys
 
+from os.path import dirname
 from typing import Final, List, Union
 
 # Add the scripts directory to Python path and import local files in scripts/
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+sys.path.insert(0, dirname(dirname(dirname(__file__))))
 import scripts.altair_themes
 
 # Import altair theme from altair_themes.py
