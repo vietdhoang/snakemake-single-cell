@@ -8,7 +8,7 @@ import sys
 from typing import Final, List, Union
 
 # Add the scripts directory to Python path and import local files in scripts/
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 import scripts.altair_themes
 
 # Import altair theme from altair_themes.py
@@ -82,5 +82,31 @@ def scatter(path_in: Union[str, bytes, os.PathLike],
         )
 
            
-if __name__ == '__main__':
-    fire.Fire()
+if __name__ == "__main__":
+    if 'snakemake' in globals():
+        
+        if snakemake.rule == "plot_scatter_labels":
+            path_dir_out = f"{snakemake.config['output_dir']}/figures/labels/"
+            labels = snakemake.config['label_file']['labels']        
+        
+        elif snakemake.rule == "plot_scatter_no_labels":
+            path_dir_out = f"{snakemake.config['output_dir']}/figures/no_labels/"
+            labels = []
+        
+        else:
+            path_dir_out = f"{snakemake.config['output_dir']}/figures/cluster_assignments/"
+            labels = [snakemake.wildcards.c_method]
+        
+        prefix = f"scatter_{snakemake.wildcards.qc_method}_{snakemake.wildcards.dr_method}"
+        use_rep = snakemake.wildcards.dr_method
+
+        scatter(
+            snakemake.input[0],
+            path_dir_out,
+            prefix,
+            labels,
+            use_rep 
+        )
+
+    else:
+        fire.Fire()

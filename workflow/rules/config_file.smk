@@ -56,42 +56,6 @@ def get_plots() -> List[str]:
     return plot_output
 
 
-# def get_too_many_cells_output() -> List[str]:
-#     '''Determine the list of desired plots based off what the user
-#     defined in the config files
-
-#     Returns:
-#         List of strings where each element is a plot file
-#     '''
-
-#     if not exists('too-many-cells', config):
-#         return []
-    
-#     tmc_output = []
-
-#     for key in config['too-many-cells']:
-
-#         if 'make-tree' in key:
-            
-#             if exists('prior', config['too-many-cells'][key]):
-                
-#                 for i in range(1, int(key[-1])):
-#                     if config['too-many-cells'][f'make-tree-{i}']['output'] == config['too-many-cells'][key]['prior']:                
-#                         tmc_output.append(
-#                             (f"{config['output_dir']}/too-many-cells/"
-#                              f"done/make-tree-{i}.prior.{key}.done")
-#                         )
-#                         break
-            
-#             else:            
-#                 tmc_output.append(
-#                     (f"{config['output_dir']}/too-many-cells/"
-#                      f"done/{key}.done")
-#                 )
-    
-#     return tmc_output
-
-
 def get_too_many_cells_output() -> List[str]:
     '''Determine the list of desired plots based off what the user
     defined in the config files

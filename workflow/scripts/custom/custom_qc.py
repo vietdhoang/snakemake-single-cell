@@ -1,1 +1,0 @@
-# Insert custom qc functions in this file
