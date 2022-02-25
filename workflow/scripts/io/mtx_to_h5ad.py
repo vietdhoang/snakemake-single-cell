@@ -48,14 +48,14 @@ def mtx_to_h5ad(path_in: Union[str, bytes, os.PathLike],
 if __name__ == "__main__":
 
     if ('snakemake' in globals()
-        and 'label_file' in snakemake.config
-        and snakemake.config['label_file']):        
+        and 'label_path' in snakemake.config['inputs'][snakemake.wildcards.sample]
+        and snakemake.config['inputs'][snakemake.wildcards.sample]):        
         
         mtx_to_h5ad(
             snakemake.input[0], 
             snakemake.output[0],
-            path_label=snakemake.config['label_file']['file'],
-            labels=snakemake.config['label_file']['labels']
+            path_label=snakemake.config['inputs'][snakemake.wildcards.sample]['label_path'],
+            labels=snakemake.config['labels']
         )
     
     elif 'snakemake' in globals():

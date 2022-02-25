@@ -23,8 +23,7 @@ def get_plots() -> List[str]:
             and config['plot_method']['scatter']['use_labels']):
             plot_output.extend(
                 expand(
-                    (f"{config['output_dir']}/figures/labels/"
-                     f"scatter_{{qc}}_{{dr}}_{{l}}.html"),
+                    "figures/labels/scatter_{qc}_{dr}_{l}.html",
                     qc=config['qc_method'],
                     dr=config['plot_method']['scatter']['dim_reduce'],
                     l=config['label_file']['labels']
@@ -34,8 +33,7 @@ def get_plots() -> List[str]:
         else:
             plot_output.extend(
                 expand(
-                    (f"{config['output_dir']}/figures/no_labels/"
-                     f"scatter_{{qc}}_{{dr}}.html"),
+                    "figures/no_labels/scatter_{qc}_{dr}.html",
                     qc=config['qc_method'], 
                     dr=config['plot_method']['scatter']['dim_reduce']
                 )
@@ -45,8 +43,7 @@ def get_plots() -> List[str]:
             and exists('cluster_method', config)):            
             plot_output.extend(
                 expand(
-                    (f"{config['output_dir']}/figures/cluster_assignments/"
-                     f"scatter_{{qc}}_{{dr}}_{{c}}.html"), 
+                    "figures/cluster_assignments/scatter_{qc}_{dr}_{c}.html", 
                     qc=config['qc_method'],
                     dr=config['plot_method']['scatter']['dim_reduce'],
                     c=config['plot_method']['scatter']['cluster'] 
@@ -69,17 +66,24 @@ def get_too_many_cells_output() -> List[str]:
 
     tmc_output = []
     dict_tmc = config['too-many-cells']
-    
+
+    samples = [*config[inputs].keys()]
+    if len(sample) > 1 and config['run_on_each_sample']:
+        samples.append('merged')
+    elif len(sample) > 1 and not config['run_on_each_sample']:
+        samples = ['merged']
+
     for key in dict_tmc:
-        if 'make-tree' in key:
-            
+        if 'make-tree' in key:            
             # If only prior exists but not comb_options
-            if exists('prior', dict_tmc[key]):            
+            if exists('prior', dict_tmc[key]):                
                 tmc_output.append(
-                    (f"{config['output_dir']}/too-many-cells/"
-                     f"{key}/{dict_tmc[key]['prior']}.prior.{key}.done")
+                    expand(
+                        (f"{config['output_dir']}/{{sample}}/too-many-cells/"
+                         f"{key}/{dict_tmc[key]['prior']}.prior.{key}.done"),
+                        sample=samples
+                    )
                 )
-            
             # If neither comb_options nor prior exist
             else:
                 tmc_output.append(
@@ -110,8 +114,7 @@ def get_final_output() -> List[str]:
         # the dimensionality reduction outputs.
         final_output.extend(
             expand(
-                (f"{config['output_dir']}/cluster/"
-                 f"mtx_{{qc}}_{{dimred}}_{{cluster}}.h5ad"),
+                ("cluster/mtx_{qc}_{dimred}_{cluster}.h5ad"),
                 qc=config['qc_method'],
                 dimred=config['dim_reduce_method'],
                 cluster=config['cluster_method']
@@ -126,7 +129,7 @@ def get_final_output() -> List[str]:
         # for the same reason as above.
         final_output.extend(
             expand(
-                f"{config['output_dir']}/dim_reduce/mtx_{{qc}}_{{dimred}}.h5ad",
+                "dim_reduce/mtx_{qc}_{dimred}.h5ad",
                 qc=config['qc_method'],
                 dimred=config['dim_reduce_method']
             )
@@ -138,7 +141,7 @@ def get_final_output() -> List[str]:
         # Add only qc outputs to final_output
         final_output.extend(
             expand(
-                f"{config['output_dir']}/qc/mtx_{{qc}}.h5ad",
+                "qc/mtx_{qc}.h5ad",
                 qc=config['qc_method']
             )
         )
@@ -147,13 +150,38 @@ def get_final_output() -> List[str]:
     # to the list of final outputs.
     if (exists('other_outputs', config)):
         final_output.extend(
-            expand(
-                f"{config['output_dir']}/{{output}}", 
-                output=config['other_outputs']
-            )
+            expand("{output}", output=config['other_outputs'])
         )
     
+
     final_output.extend(get_plots())
+
+
+    # Prepend the output directory path and sample name to each of the 
+    # elements in the list of final outputs
+    samples = [*config['inputs'].keys()]
+        
+    if len(samples) > 1:    
+        if config['run_on_each_sample']:
+            samples.append('merged')
+            final_output = [
+                f"{config['output_dir']}/{sample}/{file}" 
+                for sample in samples 
+                for file in final_output
+            ]
+        
+        else:
+            final_output= [
+                f"{config['output_dir']}/merged/{file}" 
+                for file in final_output
+            ]
+    
+    else:
+        final_output = [
+            f"{config['output_dir']}/{samples[0]}/{file}" 
+            for file in final_output
+        ]
+
     final_output.extend(get_too_many_cells_output())
         
     return final_output

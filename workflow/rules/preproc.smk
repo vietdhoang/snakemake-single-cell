@@ -1,21 +1,58 @@
 # Converts gene-barcode matricies to h5ad format
 rule mtx_to_h5ad:
     input:
-        config['input']    
+        lambda wildcards: config['inputs'][wildcards.sample]['data_path']    
     output:
-        f"{config['output_dir']}/mtx.h5ad"
+        f"{config['output_dir']}/{{sample}}/mtx.h5ad"
     conda:
         "../envs/preproc.yaml"
     script: 
-        "../scripts/io.py"
+        "../scripts/io/mtx_to_h5ad.py"
+
+
+rule h5ad_to_csv:
+    input:
+        f"{config['output_dir']}/{{sample}}/{{pipeline_stage}}/mtx_{{basename}}.h5ad"
+    output:
+        get_h5ad_to_csv_output
+    conda:
+        "../envs/preproc.yaml"
+    script:
+        "../scripts/io/h5ad_to_csv.py"
+
 
 rule qc:
     input:
-        f"{config['output_dir']}/mtx.h5ad"
+        f"{config['output_dir']}/{{sample}}/mtx.h5ad"
     output:
         # qc_method must be a name of a script in the qc directory
-        f"{config['output_dir']}/qc/mtx_{{qc_method}}.h5ad"
+        f"{config['output_dir']}/{{sample}}/qc/mtx_{{qc_method}}.h5ad"
     conda:
         "../envs/preproc.yaml"
     script:
         "../scripts/qc/{wildcards.qc_method}.py"
+
+
+rule merge_samples:
+    input:
+        get_merge_samples_input
+    output:
+        f"{config['output_dir']}/merged/qc/mtx_{{qc_method}}.h5ad"
+    conda:
+        "../envs/preproc.yaml"
+    script:
+        "../scripts/io/merge_samples.py"
+
+
+rule merge_label_files:
+    input:
+        lambda: [config['inputs'][sample]['label_path'] for sample in [*config[inputs].keys()]]
+    output:
+        f"{config['output_dir']}/labels_all_samples.csv"
+    conda:
+        "../envs/preproc.yaml"
+    script:
+        "../scripts/io/merge_samples.py"
+
+
+

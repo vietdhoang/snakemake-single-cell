@@ -54,12 +54,41 @@ def list_to_str(l: List[str]) -> str:
     return f"\"[{l_str}]\""
 
 
+def get_merge_samples_input(wildcards):
+    inputs = []
+    i = 1
+    while exists(f"input_{i}", config['inputs']):
+        inputs.append(
+            (f"{config['output_dir']}/input_{i}/qc/"
+            f"mtx_{wildcards.qc_method}.h5ad")
+        )
+        i += 1
+            
+    return inputs
+
+
 def parse_tmc_options_other(dict_make_tree: dict) -> List[str]:
     return " ".join(dict_make_tree['other_options'])
 
 
-def permute_comb_vals(dict_make_tree: dict) -> List[dict]:
-    keys = [*dict_make_tree['comb_options'].keys()]
-    values = [*dict_make_tree['comb_options'].values()]
+def get_h5ad_to_csv_output(wildcards):
 
-    return [dict(zip(keys, v)) for v in itertools.product(*values)]
+    output = [(f"{config['output_dir']}/{wildcards.sample}/"
+               f"{wildcards.pipeline_stage}/{wildcards.basename}_mtx.csv")]
+
+    output.extend(
+        expand(
+            (f"{config['output_dir']}/{wildcards.sample}/"
+             f"{wildcards.pipeline_stage}/{wildcards.basename}_{{label}}.csv"),
+            label = config['labels']
+        )
+    )
+
+    return output
+
+
+# def permute_comb_vals(dict_make_tree: dict) -> List[dict]:
+#     keys = [*dict_make_tree['comb_options'].keys()]
+#     values = [*dict_make_tree['comb_options'].values()]
+
+#     return [dict(zip(keys, v)) for v in itertools.product(*values)]

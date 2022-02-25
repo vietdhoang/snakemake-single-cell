@@ -87,15 +87,24 @@ if __name__ == "__main__":
     if 'snakemake' in globals():
         
         if snakemake.rule == "plot_scatter_labels":
-            path_dir_out = f"{snakemake.config['output_dir']}/figures/labels/"
-            labels = snakemake.config['label_file']['labels']        
+            path_dir_out = (
+                f"{snakemake.config['output_dir']}/"
+                f"{snakemake.wildcards.sample}/figures/labels/"
+            )
+            labels = snakemake.config['labels']        
         
         elif snakemake.rule == "plot_scatter_no_labels":
-            path_dir_out = f"{snakemake.config['output_dir']}/figures/no_labels/"
+            path_dir_out = (
+                f"{snakemake.config['output_dir']}/"
+                f"{snakemake.wildcards.sample}/figures/no_labels/"
+            )
             labels = []
         
         else:
-            path_dir_out = f"{snakemake.config['output_dir']}/figures/cluster_assignments/"
+            path_dir_out = (
+                f"{snakemake.config['output_dir']}/"
+                f"{snakemake.wildcards.sample}/figures/cluster_assignments/"
+            )
             labels = [snakemake.wildcards.c_method]
         
         prefix = f"scatter_{snakemake.wildcards.qc_method}_{snakemake.wildcards.dr_method}"
