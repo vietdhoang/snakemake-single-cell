@@ -67,10 +67,10 @@ def get_too_many_cells_output() -> List[str]:
     tmc_output = []
     dict_tmc = config['too-many-cells']
 
-    samples = [*config[inputs].keys()]
-    if len(sample) > 1 and config['run_on_each_sample']:
+    samples = [*config['inputs'].keys()]
+    if len(samples) > 1 and config['run_on_each_sample']:
         samples.append('merged')
-    elif len(sample) > 1 and not config['run_on_each_sample']:
+    elif len(samples) > 1 and not config['run_on_each_sample']:
         samples = ['merged']
 
     for key in dict_tmc:
@@ -87,8 +87,11 @@ def get_too_many_cells_output() -> List[str]:
             # If neither comb_options nor prior exist
             else:
                 tmc_output.append(
-                    (f"{config['output_dir']}/too-many-cells/"
-                     f"{key}/{key}.done")
+                    expand(
+                        (f"{config['output_dir']}/{{sample}}/too-many-cells/"
+                         f"{key}/{key}.done"),
+                        sample=samples
+                    )
                 )
     
     return tmc_output

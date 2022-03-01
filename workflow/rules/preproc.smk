@@ -12,9 +12,14 @@ rule mtx_to_h5ad:
 
 rule h5ad_to_csv:
     input:
-        f"{config['output_dir']}/{{sample}}/{{pipeline_stage}}/mtx_{{basename}}.h5ad"
+        f"{config['output_dir']}/{{sample}}/{{pipeline_stage}}/h5ad2csv/mtx_{{basename}}.h5ad"
     output:
-        get_h5ad_to_csv_output
+        (f"{config['output_dir']}/{{sample}}/"
+         f"{{pipeline_stage}}/h5ad2csv/{{basename}}_mtx.csv"),
+        *expand(
+            config['output_dir'] + "/{{sample}}/{{pipeline_stage}}/h5ad2csv/{{basename}}_{label}.csv",
+            label = config['labels']
+        )
     conda:
         "../envs/preproc.yaml"
     script:
@@ -46,9 +51,9 @@ rule merge_samples:
 
 rule merge_label_files:
     input:
-        lambda: [config['inputs'][sample]['label_path'] for sample in [*config[inputs].keys()]]
+        lambda wildcards: [config['inputs'][sample]['label_path'] for sample in [*config['inputs'].keys()]]
     output:
-        f"{config['output_dir']}/labels_all_samples.csv"
+        f"{config['output_dir']}/{{sample}}/too-many-cells/{{maketree}}/concat_labels.csv"
     conda:
         "../envs/preproc.yaml"
     script:

@@ -42,35 +42,74 @@ rule cluster:
 #                f"{wildcards.pipeline_stage}/{wildcards.basename}/mtx.csv")]
 
 
-# rule tmc_make_tree:
-#     input:
-#         get_maketree_input
-#     output:
-#         f"{config['output_dir']}/{{sample}}/too-many-cells/{{maketree}}/{{maketree}}.done"
+def get_maketree_input(wildcards):
+
+    inputs = []
     
-#     params:
-#         parameters = get_maketree_params
+    if exists('prior', config['too-many-cells'][wildcards.maketree]):
+        inputs.append(f"{config['output_dir']}/{wildcards.sample}/too-many-cells/{wildcards.prior}/{wildcards.prior}.done")
+    # Entire pipeline, 1 sample
+    elif len(config['inputs']) == 1:
+        inputs.append(config['inputs']['input_1']['data_path'])    
+    # Entire pipeline, many samples
+    elif len(config['inputs']) > 1 and not config['too-many-cells'][wildcards.maketree]['skip_tmc_preproc']:
+        
+        if wildcards.sample == 'merged':
+            for input in config['inputs']:
+                inputs.append(config['inputs'][input]['data_path'])
+        
+            inputs.append(f"{config['output_dir']}/merged/too-many-cells/{{maketree}}/concat_labels.csv")
+        else:
+            inputs.append(config['inputs']['input_1']['data_path'])
+            inputs.append(config['inputs']['input_1']['label_path'])
+
+    # Skip QC
+    elif config['too-many-cells'][wildcards.maketree]['skip_tmc_preproc']:
+        inputs.append((f"{config['output_dir']}/{wildcards.sample}/"
+                       f"qc/{wildcards.basename}_h5ad2csv/mtx.csv"))
+        
+        inputs.extend(
+            expand(
+                (f"{config['output_dir']}/{wildcards.sample}/qc/h5ad2csv/"
+                 "{qc_method}_{label}.csv"),
+                qc_method = config['qc_method'],
+                label = config['labels']
+            )
+        )
     
-#     shell:
-#         (      
-#             f"mkdir -p {config['output_dir']}/{{wildcards.sample}}/too-many-cells/{{wildcards.maketree}}/ && "
-#             f"too-many-cells make-tree {{params.parameters}} && "
-#             f"touch {config['output_dir']}/{{wildcards.sample}}/too-many-cells/{{wildcards.maketree}}/{{wildcards.maketree}}.done"
-#         )
+    return inputs
 
 
-# rule tmc_make_tree_prior:
-#     input:
-#         config['input'],
-#         f"{config['output_dir']}/{{sample}}/too-many-cells/{{prior}}/{{prior}}.done"
-#     output:
-#         f"{config['output_dir']}/{{sample}}/too-many-cells/{{maketree}}/{{prior}}.prior.{{maketree}}.done"
-#     params:
-#         parameters = get_maketree_params
+rule tmc_make_tree:
+    input:
+        get_maketree_input
+    output:
+        f"{config['output_dir']}/{{sample}}/too-many-cells/{{maketree}}/{{maketree}}.done"
     
-#     shell:
-#         (   
-#             f"mkdir -p {config['output_dir']}/{{wildcards.sample}}/too-many-cells/{{wildcards.maketree}}/ && "   
-#             f"too-many-cells make-tree {{params.parameters}} && "
-#             f"touch {config['output_dir']}/{{wildcards.sample}}/too-many-cells/{{wildcards.maketree}}/{{wildcards.prior}}.prior.{{wildcards.maketree}}.done"
-#         )
+    params:
+        # parameters = get_maketree_params
+        parametrs = ""
+    
+    shell:
+        (      
+            f"mkdir -p {config['output_dir']}/{{wildcards.sample}}/too-many-cells/{{wildcards.maketree}}/ && "
+            f"too-many-cells make-tree {{params.parameters}} && "
+            f"touch {config['output_dir']}/{{wildcards.sample}}/too-many-cells/{{wildcards.maketree}}/{{wildcards.maketree}}.done"
+        )
+
+
+rule tmc_make_tree_prior:
+    input:
+        get_maketree_input        
+    output:
+        f"{config['output_dir']}/{{sample}}/too-many-cells/{{maketree}}/{{prior}}.prior.{{maketree}}.done"
+    params:
+        # parameters = get_maketree_params
+        parameters = ""
+    
+    shell:
+        (   
+            f"mkdir -p {config['output_dir']}/{{wildcards.sample}}/too-many-cells/{{wildcards.maketree}}/ && "   
+            f"too-many-cells make-tree {{params.parameters}} && "
+            f"touch {config['output_dir']}/{{wildcards.sample}}/too-many-cells/{{wildcards.maketree}}/{{wildcards.prior}}.prior.{{wildcards.maketree}}.done"
+        )
