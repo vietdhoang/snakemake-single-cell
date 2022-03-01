@@ -1,2 +1,2 @@
 # snakemake-single-cell
-Work in progress
+Work in progress.
