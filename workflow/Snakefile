@@ -15,7 +15,7 @@ include: "rules/plot.smk"
 wildcard_constraints:
     # A can be anything that doesn't contain a 
     # '\', '.',  '/', or a whitespace
-    qc_method = get_wc_constraint('qc_method'),
+    qc_method = get_wc_constraint('qc_method') + "|tmc_qc",
     dr_method = get_wc_constraint('dim_reduce_method'),
     c_method = get_wc_constraint('cluster_method'),
     prior = "[^\\/\.\s]*",

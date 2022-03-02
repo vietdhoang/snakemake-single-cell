@@ -77,22 +77,51 @@ def get_too_many_cells_output() -> List[str]:
         if 'make-tree' in key:            
             # If only prior exists but not comb_options
             if exists('prior', dict_tmc[key]):                
-                tmc_output.append(
-                    expand(
-                        (f"{config['output_dir']}/{{sample}}/too-many-cells/"
-                         f"{key}/{dict_tmc[key]['prior']}.prior.{key}.done"),
-                        sample=samples
+                if dict_tmc[dict_tmc[key]['prior']]['tmc_qc']:
+                    tmc_output.extend(
+                        expand(
+                            (f"{config['output_dir']}/{{sample}}/too-many-cells/"
+                             f"{key}/tmc_qc/{dict_tmc[key]['prior']}.prior.{key}.done"),
+                            sample=samples
+                        )
                     )
-                )
+                else:
+                    tmc_output.extend(
+                        expand(
+                            (f"{config['output_dir']}/{{sample}}/too-many-cells/"
+                             f"{key}/{{qc_method}}/{dict_tmc[key]['prior']}.prior.{key}.done"),
+                            sample=samples,
+                            qc_method = config['qc_method']
+                        )
+                    )
+                
+                
+                # tmc_output.append(
+                #     expand(
+                #         (f"{config['output_dir']}/{{sample}}/too-many-cells/"
+                #          f"{key}/{dict_tmc[key]['prior']}.prior.{key}.done"),
+                #         sample=samples
+                #     )
+                # )
             # If neither comb_options nor prior exist
             else:
-                tmc_output.append(
-                    expand(
-                        (f"{config['output_dir']}/{{sample}}/too-many-cells/"
-                         f"{key}/{key}.done"),
-                        sample=samples
+                if dict_tmc[key]['tmc_qc']:
+                    tmc_output.extend(
+                        expand(
+                            (f"{config['output_dir']}/{{sample}}/too-many-cells/"
+                             f"{key}/tmc_qc/{key}.done"),
+                            sample=samples
+                        )
                     )
-                )
+                else:
+                    tmc_output.extend(
+                        expand(
+                            (f"{config['output_dir']}/{{sample}}/too-many-cells/"
+                             f"{key}/{{qc_method}}/{key}.done"),
+                            sample=samples,
+                            qc_method = config['qc_method']
+                        )
+                    )
     
     return tmc_output
 

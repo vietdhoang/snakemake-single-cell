@@ -1,3 +1,5 @@
+ruleorder: merge_samples  > qc
+
 # Converts gene-barcode matricies to h5ad format
 rule mtx_to_h5ad:
     input:
@@ -12,14 +14,12 @@ rule mtx_to_h5ad:
 
 rule h5ad_to_csv:
     input:
-        f"{config['output_dir']}/{{sample}}/{{pipeline_stage}}/h5ad2csv/mtx_{{basename}}.h5ad"
+        f"{config['output_dir']}/{{sample}}/{{pipeline_stage}}/mtx_{{basename}}.h5ad"
     output:
         (f"{config['output_dir']}/{{sample}}/"
-         f"{{pipeline_stage}}/h5ad2csv/{{basename}}_mtx.csv"),
-        *expand(
-            config['output_dir'] + "/{{sample}}/{{pipeline_stage}}/h5ad2csv/{{basename}}_{label}.csv",
-            label = config['labels']
-        )
+         f"{{pipeline_stage}}/h5ad2csv/mtx_{{basename}}.csv"),
+        (f"{config['output_dir']}/{{sample}}/"
+         f"{{pipeline_stage}}/h5ad2csv/label_{{basename}}.csv")
     conda:
         "../envs/preproc.yaml"
     script:
@@ -53,7 +53,7 @@ rule merge_label_files:
     input:
         lambda wildcards: [config['inputs'][sample]['label_path'] for sample in [*config['inputs'].keys()]]
     output:
-        f"{config['output_dir']}/{{sample}}/too-many-cells/{{maketree}}/concat_labels.csv"
+        f"{config['output_dir']}/{{sample}}/too-many-cells/{{maketree}}/merged_labels.csv"
     conda:
         "../envs/preproc.yaml"
     script:

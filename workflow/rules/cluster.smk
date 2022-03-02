@@ -37,58 +37,66 @@ rule cluster:
 #     return params
 
 
-# def get_maketree_input(wildcards):
-#     [(f"{config['output_dir']}/{wildcards.sample}/"
-#                f"{wildcards.pipeline_stage}/{wildcards.basename}/mtx.csv")]
-
-
 def get_maketree_input(wildcards):
 
-    inputs = []
+    inputs = []   
     
-    if exists('prior', config['too-many-cells'][wildcards.maketree]):
-        inputs.append(f"{config['output_dir']}/{wildcards.sample}/too-many-cells/{wildcards.prior}/{wildcards.prior}.done")
-    # Entire pipeline, 1 sample
-    elif len(config['inputs']) == 1:
-        inputs.append(config['inputs']['input_1']['data_path'])    
-    # Entire pipeline, many samples
-    elif len(config['inputs']) > 1 and not config['too-many-cells'][wildcards.maketree]['skip_tmc_preproc']:
-        
-        if wildcards.sample == 'merged':
+    # If the user decides to not skip the preprocessing of too-many-cells
+    if wildcards.qc_method == "tmc_qc":
+        #  If the sample's name is not "merged"
+        if wildcards.sample == "merged":
+            # Append the path of all inputs
+            # The path to a concatonated label file is required as well.
             for input in config['inputs']:
                 inputs.append(config['inputs'][input]['data_path'])
-        
-            inputs.append(f"{config['output_dir']}/merged/too-many-cells/{{maketree}}/concat_labels.csv")
+            
+            # Check if the user provided label files by checking
+            # if a label file exists for the first input (i.e input_1)
+            first_input = [*config['inputs'].keys()][0] 
+            if exists('label_path', config['inputs'][first_input]):
+                inputs.append(
+                    (f"{config['output_dir']}/merged/too-many-cells/"
+                     f"{wildcards.maketree}/merged_labels.csv")
+                )
+        #  If the sample's name is not "merged" 
         else:
-            inputs.append(config['inputs']['input_1']['data_path'])
-            inputs.append(config['inputs']['input_1']['label_path'])
-
-    # Skip QC
-    elif config['too-many-cells'][wildcards.maketree]['skip_tmc_preproc']:
-        inputs.append((f"{config['output_dir']}/{wildcards.sample}/"
-                       f"qc/{wildcards.basename}_h5ad2csv/mtx.csv"))
-        
-        inputs.extend(
-            expand(
-                (f"{config['output_dir']}/{wildcards.sample}/qc/h5ad2csv/"
-                 "{qc_method}_{label}.csv"),
-                qc_method = config['qc_method'],
-                label = config['labels']
+            inputs.append(
+                config['inputs'][wildcards.sample]['data_path']
             )
+
+            # Add the label file if provided.
+            if exists('label_path', config['inputs'][wildcards.sample]):
+                inputs.append(
+                    config['inputs'][wildcards.sample]['label_path']
+                )
+
+    # If the user decides to use this pipeline's qc methods instead of 
+    # too-many-cells' filtering and normalization   
+    else: 
+        # Append qc'd matrix csv file to inputs
+        inputs.append(
+            (f"{config['output_dir']}/{wildcards.sample}/qc/"
+             f"h5ad2csv/mtx_{wildcards.qc_method}.csv")
         )
-    
+
+        # Append corresponding label file for that csv file
+        inputs.append(
+            (f"{config['output_dir']}/{wildcards.sample}/qc/"
+             f"h5ad2csv/label_{wildcards.qc_method}.csv")
+        )
+
     return inputs
 
 
-rule tmc_make_tree:
+rule tmc_maketree:
     input:
         get_maketree_input
     output:
-        f"{config['output_dir']}/{{sample}}/too-many-cells/{{maketree}}/{{maketree}}.done"
+        f"{config['output_dir']}/{{sample}}/too-many-cells/{{maketree}}/{{qc_method}}/{{maketree}}.done"
     
     params:
         # parameters = get_maketree_params
-        parametrs = ""
+        parameters = ""
     
     shell:
         (      
@@ -98,11 +106,21 @@ rule tmc_make_tree:
         )
 
 
-rule tmc_make_tree_prior:
+# def get_maketree_prior_input(wildcards):
+#     # If the user provided a prior for make-tree, the only input required is 
+#     # a flag file indicating that the prior has finished being created.
+#     if exists('prior', config['too-many-cells'][wildcards.maketree]):
+#         inputs.append(
+#             (f"{config['output_dir']}/{wildcards.sample}/too-many-cells/"
+#              f"{wildcards.prior}/{wildcards.prior}.done")
+#         )
+
+rule tmc_maketree_prior:
     input:
-        get_maketree_input        
+        # get_maketree_input
+        f"{config['output_dir']}/{{sample}}/too-many-cells/{{prior}}/{{qc_method}}/{{prior}}.done"        
     output:
-        f"{config['output_dir']}/{{sample}}/too-many-cells/{{maketree}}/{{prior}}.prior.{{maketree}}.done"
+        f"{config['output_dir']}/{{sample}}/too-many-cells/{{maketree}}/{{qc_method}}/{{prior}}.prior.{{maketree}}.done"
     params:
         # parameters = get_maketree_params
         parameters = ""
