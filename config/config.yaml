@@ -12,16 +12,6 @@ inputs:
     data_path: "pbmc2/"
     label_path: "pbmc2/labels.csv"
     obs_tag: "2"
-  
-  # input_3:
-  #   data_path: "pbmc3/"
-  #   label_path: "pbmc3/labels.csv"
-  #   obs_tag: "3"
-  
-  # input_4:
-  #   data_path: "pbmc4/"
-  #   label_path: "pbmc4/labels.csv"
-  #   obs_tag: "4"
 
 labels: ["label"]
 
@@ -84,8 +74,6 @@ too-many-cells:
       - --draw-collection "PieRing"
 
 
-# NOTE: Future feature
-# Plot the results of qc, dimensionality reduction, and clustering
 plot_method:
 
   scatter:    

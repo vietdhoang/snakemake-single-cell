@@ -85,10 +85,3 @@ def get_h5ad_to_csv_output(wildcards):
     )
 
     return output
-
-
-# def permute_comb_vals(dict_make_tree: dict) -> List[dict]:
-#     keys = [*dict_make_tree['comb_options'].keys()]
-#     values = [*dict_make_tree['comb_options'].values()]
-
-#     return [dict(zip(keys, v)) for v in itertools.product(*values)]

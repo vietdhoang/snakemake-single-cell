@@ -57,7 +57,7 @@ rule merge_label_files:
     conda:
         "../envs/preproc.yaml"
     script:
-        "../scripts/io/merge_samples.py"
+        "../scripts/io/merge_label_files.py"
 
 
 

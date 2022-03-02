@@ -32,7 +32,7 @@ def merge_samples(snakemake) -> None:
     adatas = []
     obs_tags = []
     
-    for path_sample in list(snakemake.input):        
+    for path_sample in snakemake.input:               
         adata = sc.read_h5ad(path_sample)
         sample_name = get_sample_name_from_path(path_sample, snakemake.config)
         
