@@ -95,14 +95,6 @@ def get_too_many_cells_output() -> List[str]:
                         )
                     )
                 
-                
-                # tmc_output.append(
-                #     expand(
-                #         (f"{config['output_dir']}/{{sample}}/too-many-cells/"
-                #          f"{key}/{dict_tmc[key]['prior']}.prior.{key}.done"),
-                #         sample=samples
-                #     )
-                # )
             # If neither comb_options nor prior exist
             else:
                 if dict_tmc[key]['tmc_qc']:

@@ -1,4 +1,4 @@
-ruleorder: merge_samples  > qc
+ruleorder: merge_samples > qc
 
 # Converts gene-barcode matricies to h5ad format
 rule mtx_to_h5ad:

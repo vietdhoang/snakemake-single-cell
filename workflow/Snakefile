@@ -1,6 +1,6 @@
 import os
 from snakemake.utils import min_version
-min_version("7.0")
+min_version("6.12")
 
 configfile: f"{workflow.basedir}/../config/config.yaml"
 
@@ -19,8 +19,11 @@ wildcard_constraints:
     dr_method = get_wc_constraint('dim_reduce_method'),
     c_method = get_wc_constraint('cluster_method'),
     prior = "[^\\/\.\s]*",
-    maketree = "[^\\/\.\s]*"
+    maketree = "[^\\/\.\s]*",
+    sample = "[^\\/\.\s]*"
 
+
+localrules: all
 
 onstart:
     if not os.path.exists(config['output_dir']):
@@ -29,5 +32,4 @@ onstart:
 
 rule all:
     input:
-        # This function is located in workflow/rules/common.smk
         get_final_output()
