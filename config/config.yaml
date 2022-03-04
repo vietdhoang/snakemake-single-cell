@@ -2,33 +2,36 @@
 
 # User-defined input. The path must be either absolute or relative to the 
 # working directory.
-input:
-  - "pbmc3k_barcodes.tsv.gz"
-  - "pbmc3k_genes.tsv.gz"
-  - "pbmc3k_matrix.mtx.gz"
+inputs:
+  input_1:
+    data_path: "/home/viethoang/Documents/data/pbmc1/"
+    label_path: "/home/viethoang/Documents/data/pbmc1/labels.csv"
+    obs_tag: "1"
 
-label_file: 
-  file: "labels.csv"
-  labels:
-    - "label1"
-    - "label2"
+  input_2:
+    data_path: "/home/viethoang/Documents/data/pbmc2/"
+    label_path: "/home/viethoang/Documents/data/pbmc2/labels.csv"
+    obs_tag: "2"
+  
+  # input_3:
+  #   data_path: "pbmc3/"
+  #   label_path: "pbmc3/labels.csv"
+  #   obs_tag: "3"
+
+labels: ["label"]
+
+run_on_each_sample: False
 
 # Name of output directory. The path must be either absolute or relative to the
 # working directory
-output_dir: "snakemake-single-cell-out"
-
-# The prefix that will be prepended to every output file. Provide an empty 
-# string if no prefix is desired.
-# TODO: Future functionality -- automatically determine prefix from input files.
-# output_prefix: "GSM4932159_sample1_"
-output_prefix: "pbmc3k_"
+output_dir: "/home/viethoang/Documents/data/snakemake-single-cell-out"
 
 # List the qc method(s) that will be used. If this is left empty or is deleted,
 # then the entire pipeline will be determined by the files in other_outputs
 qc_method:
   # - "noqc"
   - "seurat"
-  - "tutorial"
+  # - "tutorial"
 
 # List the dimensionality reduction method(s) that will be used.
 # Each method must correspond EXACTLY to a function in scripts/dim_reduce.py
@@ -48,22 +51,38 @@ cluster_method:
   - "louvain"
 
 
-# NOTE: Future feature
-# Plot the results of qc, dimensionality reduction, and clustering
+too-many-cells:
+
+  make-tree-1:
+    tmc_qc: True    
+    options:    
+      - --filter-thresholds "(200, 1)"
+      - --draw-collection "PieRing"
+  
+  # make-tree-2:    
+  #   prior: "make-tree-1"
+  #   options:
+  #     - --draw-node-number
+  #     - --dendrogram-output "tree-node-numbers.svg"
+  #     - --draw-collection "PieRing"
+  #     - --min-size 1
+  #     - --smart-cutoff 4
+
+  # make-tree-3:
+  #   tmc_qc: False
+  #   options:
+  #     - --draw-collection "PieRing"
+  
+  # make-tree-4:
+  #   prior: "make-tree-3"
+  #   options:
+  #     - --draw-collection "PieRing"
+
+
 plot_method:
 
   scatter:    
     use_labels: True   
-    dim_reduce:
-      - "pca"
-      - "umap"
-      - "tsne"    
-    cluster:
-      - "leiden"
-      - "louvain"
-  
-  tree:
-    use_labels: True
     dim_reduce:
       - "pca"
       - "umap"

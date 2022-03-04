@@ -25,16 +25,6 @@ def get_wc_constraint(key: str) -> str:
         return "[^\\/\.\s]*"
 
 
-def make_output_dir(dir_out: Union[str, bytes, os.PathLike]) -> None:
-    '''Create an output directory for the pipeline if none exist
-
-    Args:
-        dir_out: output path for the directory
-    '''
-    if not os.path.exists(dir_out):
-        os.mkdir(dir_out)
-
-
 def exists(key: str, dictionary: dict) -> bool:
     '''Helper function to determine if a key exists in a 
     dictionary and isn't empty.
@@ -47,130 +37,6 @@ def exists(key: str, dictionary: dict) -> bool:
         True if the key exists in the dictionary and the entry is not empty.
     '''
     return key in dictionary and dictionary[key]
-
-
-def get_plots() -> List[str]:
-    '''Determine the list of desired plots based off what the user
-    defined in the config files
-
-    Returns:
-        List of strings where each element is a plot file
-    '''
-
-    if not exists('plot_method', config):
-        return []
-
-    plot_output = []
-
-    if (exists('scatter', config['plot_method']) 
-        and exists('dim_reduce_method', config)
-        and exists('dim_reduce', config['plot_method']['scatter'])):
-        
-        if (exists('label_file', config) 
-            and config['plot_method']['scatter']['use_labels']):
-            plot_output.extend(
-                expand(
-                    (f"{config['output_dir']}/figures/labels/"
-                     f"{config['output_prefix']}scatter_{{qc}}_{{dr}}_{{l}}.html"),
-                    qc=config['qc_method'],
-                    dr=config['plot_method']['scatter']['dim_reduce'],
-                    l=config['label_file']['labels']
-                )                 
-            )
-            
-        else:
-            plot_output.extend(
-                expand(
-                    (f"{config['output_dir']}/figures/no_labels/"
-                     f"{config['output_prefix']}scatter_{{qc}}_{{dr}}.html"),
-                    qc=config['qc_method'], 
-                    dr=config['plot_method']['scatter']['dim_reduce']
-                )
-            )        
-        
-        if (exists('cluster', config['plot_method']['scatter']) 
-            and exists('cluster_method', config)):            
-            plot_output.extend(
-                expand(
-                    (f"{config['output_dir']}/figures/cluster_assignments/"
-                     f"{config['output_prefix']}scatter_{{qc}}_{{dr}}_{{c}}.html"), 
-                    qc=config['qc_method'],
-                    dr=config['plot_method']['scatter']['dim_reduce'],
-                    c=config['plot_method']['scatter']['cluster'] 
-                )
-            )
-    
-    return plot_output
-
-
-def get_final_output() -> List[str]:
-    '''Determine the list of desired output files based off what the user
-    defined in the config files
-
-    Returns:
-        List of strings where each element is an output file
-    '''
-    
-    final_output = []   # List of desired output files
-
-    # If the user selected qc, dimensionality reduction and clustering
-    if (exists('qc_method', config) 
-        and exists('dim_reduce_method', config) 
-        and exists('cluster_method', config)):
-        
-        # Here we only add the clustering outputs to final_output because
-        # Snakemake will automatically produce all other upstream files, such as
-        # the dimensionality reduction outputs.
-        final_output.extend(
-            expand(
-                (f"{config['output_dir']}/cluster/"
-                 f"{config['output_prefix']}mtx_{{qc}}_{{dimred}}_{{cluster}}.h5ad"),
-                qc=config['qc_method'],
-                dimred=config['dim_reduce_method'],
-                cluster=config['cluster_method']
-            )
-        )
-    
-    # If the user selected qc and dimensionality reduction only
-    elif (exists('qc_method', config) 
-          and exists('dim_reduce_method', config)):
-
-        # Here we only add the dimensionality reduction outputs to final_output
-        # for the same reason as above.
-        final_output.extend(
-            expand(
-                (f"{config['output_dir']}/dim_reduce/"
-                 f"{config['output_prefix']}mtx_{{qc}}_{{dimred}}.h5ad"),
-                qc=config['qc_method'],
-                dimred=config['dim_reduce_method']
-            )
-        )
-    
-    # If the user selected qc only
-    elif (exists('qc_method', config)):
-
-        # Add only qc outputs to final_output
-        final_output.extend(
-            expand(
-                (f"{config['output_dir']}/qc/"
-                 f"{config['output_prefix']}mtx_{{qc}}.h5ad"),
-                qc=config['qc_method']
-            )
-        )
-
-    # Takes everything from other_outputs in the config file and appends it
-    # to the list of final outputs.
-    if (exists('other_outputs', config)):
-        final_output.extend(
-            expand(
-                f"{config['output_dir']}/{{output}}", 
-                output=config['other_outputs']
-            )
-        )
-    
-    final_output.extend(get_plots())
-        
-    return final_output
 
 
 def list_to_str(l: List[str]) -> str:
@@ -186,3 +52,217 @@ def list_to_str(l: List[str]) -> str:
     '''
     l_str = ",".join(l)
     return f"\"[{l_str}]\""
+
+
+def get_merge_samples_input(wildcards):
+    inputs = []
+    i = 1
+    while exists(f"input_{i}", config['inputs']):
+        inputs.append(
+            (f"{config['output_dir']}/input_{i}/qc/"
+            f"mtx_{wildcards.qc_method}.h5ad")
+        )
+        i += 1
+            
+    return inputs
+
+
+def get_h5ad_to_csv_output(wildcards):
+
+    output = [(f"{config['output_dir']}/{wildcards.sample}/"
+               f"{wildcards.pipeline_stage}/{wildcards.basename}_mtx.csv")]
+
+    output.extend(
+        expand(
+            (f"{config['output_dir']}/{wildcards.sample}/"
+             f"{wildcards.pipeline_stage}/{wildcards.basename}_{{label}}.csv"),
+            label = config['labels']
+        )
+    )
+
+    return output
+
+
+def get_maketree_input(wildcards):
+
+    inputs = []   
+    
+    # If the user decides to not skip the preprocessing of too-many-cells
+    if wildcards.qc_method == "tmc_qc":
+        #  If the sample's name is not "merged"
+        if wildcards.sample == "merged":
+            # Append the path of all inputs
+            # The path to a concatonated label file is required as well.
+            for input in config['inputs']:
+                inputs.append(config['inputs'][input]['data_path'])
+            
+            # Check if the user provided label files by checking
+            # if a label file exists for the first input (i.e input_1)
+            first_input = [*config['inputs'].keys()][0] 
+            if exists('label_path', config['inputs'][first_input]):
+                inputs.append(
+                    (f"{config['output_dir']}/merged/too-many-cells/"
+                     f"{wildcards.maketree}/merged_labels.csv")
+                )
+        #  If the sample's name is not "merged" 
+        else:
+            inputs.append(
+                config['inputs'][wildcards.sample]['data_path']
+            )
+
+            # Add the label file if provided.
+            if exists('label_path', config['inputs'][wildcards.sample]):
+                inputs.append(
+                    config['inputs'][wildcards.sample]['label_path']
+                )
+
+    # If the user decides to use this pipeline's qc methods instead of 
+    # too-many-cells' filtering and normalization   
+    else: 
+        # Append qc'd matrix csv file to inputs
+        inputs.append(
+            (f"{config['output_dir']}/{wildcards.sample}/qc/"
+             f"h5ad2csv/mtx_{wildcards.qc_method}.csv")
+        )
+
+        # Append corresponding label file for that csv file if it exists
+        # If the sample is 'merged' and a label file exists for the first input,
+        # then it must exist for all other inputs (user must satisfy this)
+        # If the sample is not 'merged' (i.e anything else), the check if the 
+        # sample has a label file. If it does, add it to the list of inputs.
+        first_input = [*config['inputs'].keys()][0]
+        if (wildcards.sample == "merged"): 
+            if exists('label_path', config['inputs'][first_input]):
+                inputs.append(
+                    (f"{config['output_dir']}/{wildcards.sample}/qc/"
+                     f"h5ad2csv/label_{wildcards.qc_method}.csv")
+                )
+        
+        elif exists('label_path', config['inputs'][wildcards.sample]):
+            inputs.append(
+                (f"{config['output_dir']}/{wildcards.sample}/qc/"
+                f"h5ad2csv/label_{wildcards.qc_method}.csv")
+            )
+
+    return inputs
+
+
+def get_maketree_params(wildcards):
+    
+    # Get the list of user-selected options from the config file
+    options = config['too-many-cells'][wildcards.maketree]['options']
+    
+    inputs = []
+
+    # Get the first input (input_1)
+    first_input = [*config['inputs'].keys()][0]
+
+    # If the user decides to not skip the preprocessing of too-many-cells
+    if wildcards.qc_method == "tmc_qc":
+        # If the sample's name is not "merged"
+        if wildcards.sample == "merged":
+            for input in config['inputs']:
+                inputs.append(f"--matrix-path {config['inputs'][input]['data_path']}")
+            
+            # Check if the user provided label files by checking
+            # if a label file exists for the first input             
+            if exists('label_path', config['inputs'][first_input]):
+                inputs.append(
+                    (f"--labels-file {config['output_dir']}/merged/"
+                     f"too-many-cells/{wildcards.maketree}/merged_labels.csv")
+                )
+        
+        # If the sample's name is not "merged"
+        else:
+            # Append qc'd matrix csv file to inputs
+            inputs.append(
+                f"--matrix-path {config['inputs'][wildcards.sample]['data_path']}"
+            )
+
+            # Add the label file if provided.
+            if exists('label_path', config['inputs'][wildcards.sample]):
+                inputs.append(
+                    f"--labels-file {config['inputs'][wildcards.sample]['label_path']}"
+                )
+    
+    # If the user decides to use this pipeline's qc methods instead of 
+    # too-many-cells' filtering and normalization   
+    else: 
+        # Append qc'd matrix csv file to inputs
+        inputs.append(
+            (f"--matrix-path {config['output_dir']}/{wildcards.sample}/qc/"
+             f"h5ad2csv/mtx_{wildcards.qc_method}.csv")
+        )
+
+        # Append corresponding label file for that csv file (if it exists).
+        # If the sample is 'merged' and a label file exists for the first input,
+        # then include the --labels-file option for the 'merged' sample
+        # If the sample is not 'merged' (i.e anything else), the check if the 
+        # sample has a label file. If it does, add it to the list of inputs.
+        if (wildcards.sample == "merged"): 
+            if exists('label_path', config['inputs'][first_input]):
+                inputs.append(
+                    (f"--labels-file {config['output_dir']}/{wildcards.sample}/"
+                     f"qc/h5ad2csv/label_{wildcards.qc_method}.csv")
+            )   
+        
+        elif exists('label_path', config['inputs'][wildcards.sample]):
+            inputs.append(
+                (f"--labels-file {config['output_dir']}/{wildcards.sample}/qc/"
+                 f"h5ad2csv/label_{wildcards.qc_method}.csv")
+            )
+
+    inputs_str = " ".join(inputs)
+    options_str = " ".join(options)
+    output_dir = (f"{config['output_dir']}/{wildcards.sample}/"
+                  f"too-many-cells/{wildcards.maketree}/{wildcards.qc_method}")   
+    
+    params = f"{inputs_str} {options_str} --output {output_dir} > {output_dir}/cluster.csv"
+
+    return params
+
+
+def get_maketree_prior_params(wildcards):
+
+    # Get the list of user-selected options from the config file
+    options = config['too-many-cells'][wildcards.maketree]['options']
+    
+    # Get the first input (input_1)
+    first_input = [*config['inputs'].keys()][0]
+    
+    if wildcards.qc_method == "tmc_qc":    
+        if wildcards.sample == "merged": 
+            if exists('label_path', config['inputs'][first_input]):
+                options.insert(0, 
+                    (f"--labels-file {config['output_dir']}/{wildcards.sample}/"
+                     f"too-many-cells/{wildcards.prior}/merged_labels.csv")
+                )
+        elif exists('label_path', config['inputs'][wildcards.sample]):
+            options.insert(0,
+                f"--labels-file {config['inputs'][wildcards.sample]['label_path']}"
+            )
+
+    else:
+        if (wildcards.sample == "merged"): 
+            if exists('label_path', config['inputs'][first_input]):
+                options.insert(0,
+                    (f"--labels-file {config['output_dir']}/{wildcards.sample}/"
+                     f"qc/h5ad2csv/label_{wildcards.qc_method}.csv")
+                )
+            
+        elif exists('label_path', config['inputs'][wildcards.sample]):
+            options.insert(0,
+                (f"--labels-file {config['output_dir']}/{wildcards.sample}/qc/"
+                 f"h5ad2csv/label_{wildcards.qc_method}.csv")
+            )
+    
+    prior = (f"{config['output_dir']}/{wildcards.sample}/"
+             f"too-many-cells/{wildcards.prior}/{wildcards.qc_method}")
+    options_str = " ".join(options)
+    output_dir = (f"{config['output_dir']}/{wildcards.sample}/"
+                  f"too-many-cells/{wildcards.maketree}/{wildcards.qc_method}")
+
+    params = (f"--prior {prior} {options_str} --output {output_dir} "
+              f"> {output_dir}/cluster.csv")
+    
+    return params

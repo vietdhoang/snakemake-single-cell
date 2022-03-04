@@ -1,29 +1,55 @@
+import glob
 import os
 from snakemake.utils import min_version
 min_version("6.12")
 
 configfile: f"{workflow.basedir}/../config/config.yaml"
 
+include: "rules/config_file.smk"
 include: "rules/common.smk"
 include: "rules/preproc.smk"
-include: "rules/mtx_transform.smk"
+include: "rules/dim_reduce.smk"
+include: "rules/cluster.smk"
 include: "rules/plot.smk"
 
 
 wildcard_constraints:
     # A can be anything that doesn't contain a 
     # '\', '.',  '/', or a whitespace
-    prefix = "[^\\/\.\s]*",
-    qc_method = get_wc_constraint('qc_method'),
+    qc_method = get_wc_constraint('qc_method') + "|tmc_qc",
     dr_method = get_wc_constraint('dim_reduce_method'),
-    c_method = get_wc_constraint('cluster_method')
+    c_method = get_wc_constraint('cluster_method'),
+    prior = "[^\\/\.\s]*",
+    maketree = "[^\\/\.\s]*",
+    sample = "[^\\/\.\s]*"
 
+
+localrules: all
 
 onstart:
-    make_output_dir(f"{os.getcwd()}/{config['output_dir']}")
+    if not os.path.exists(config['output_dir']):
+        os.mkdir(config['output_dir'])
 
 
 rule all:
     input:
-        # This function is located in workflow/rules/common.smk
         get_final_output()
+
+
+rule create_all_conda_envs:
+    input:
+        "cluster_env.done",
+        "dim_reduce_env.done",
+        "plot_env.done",
+        "preproc_env.done"
+
+rule create_conda_env:
+    output:
+        temp("{basename}_env.done")
+    conda:
+        "envs/{basename}.yaml"
+    shell:
+        (
+            "touch {wildcards.basename}_env.done"
+            "echo \"Finished creating {wildcards.basename} environment\""
+        )
