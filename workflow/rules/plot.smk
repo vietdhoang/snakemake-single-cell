@@ -1,3 +1,5 @@
+localrules: plot_scatter_labels, plot_scatter_no_labels, plot_scatter_clusters
+
 rule plot_scatter_labels:
     input:
         f"{config['output_dir']}/{{sample}}/dim_reduce/mtx_{{qc_method}}_{{dr_method}}.h5ad"

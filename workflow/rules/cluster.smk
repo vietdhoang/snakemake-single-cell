@@ -1,3 +1,5 @@
+localrules: tmc_maketree_prior
+
 # The rule for clustering.
 # Requires that dimensionality reduction has been run first. 
 # Like the dim_reduce rule, it calls a specified function in cluster.py
