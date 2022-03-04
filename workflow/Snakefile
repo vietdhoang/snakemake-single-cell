@@ -1,3 +1,4 @@
+import glob
 import os
 from snakemake.utils import min_version
 min_version("6.12")
@@ -33,3 +34,22 @@ onstart:
 rule all:
     input:
         get_final_output()
+
+
+rule create_all_conda_envs:
+    input:
+        "cluster_env.done",
+        "dim_reduce_env.done",
+        "plot_env.done",
+        "preproc_env.done"
+
+rule create_conda_env:
+    output:
+        temp("{basename}_env.done")
+    conda:
+        "envs/{basename}.yaml"
+    shell:
+        (
+            "touch {wildcards.basename}_env.done"
+            "echo \"Finished creating {wildcards.basename} environment\""
+        )

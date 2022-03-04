@@ -4,13 +4,13 @@
 # working directory.
 inputs:
   input_1:
-    data_path: "pbmc1/"
-    label_path: "pbmc1/labels.csv"
+    data_path: "/home/viethoang/Documents/data/pbmc1/"
+    label_path: "/home/viethoang/Documents/data/pbmc1/labels.csv"
     obs_tag: "1"
 
   input_2:
-    data_path: "pbmc2/"
-    label_path: "pbmc2/labels.csv"
+    data_path: "/home/viethoang/Documents/data/pbmc2/"
+    label_path: "/home/viethoang/Documents/data/pbmc2/labels.csv"
     obs_tag: "2"
   
   # input_3:
@@ -24,7 +24,7 @@ run_on_each_sample: False
 
 # Name of output directory. The path must be either absolute or relative to the
 # working directory
-output_dir: "snakemake-single-cell-out"
+output_dir: "/home/viethoang/Documents/data/snakemake-single-cell-out"
 
 # List the qc method(s) that will be used. If this is left empty or is deleted,
 # then the entire pipeline will be determined by the files in other_outputs
@@ -59,24 +59,24 @@ too-many-cells:
       - --filter-thresholds "(200, 1)"
       - --draw-collection "PieRing"
   
-  make-tree-2:    
-    prior: "make-tree-1"
-    options:
-      - --draw-node-number
-      - --dendrogram-output "tree-node-numbers.svg"
-      - --draw-collection "PieRing"
-      - --min-size 1
-      - --smart-cutoff 4
+  # make-tree-2:    
+  #   prior: "make-tree-1"
+  #   options:
+  #     - --draw-node-number
+  #     - --dendrogram-output "tree-node-numbers.svg"
+  #     - --draw-collection "PieRing"
+  #     - --min-size 1
+  #     - --smart-cutoff 4
 
-  make-tree-3:
-    tmc_qc: False
-    options:
-      - --draw-collection "PieRing"
+  # make-tree-3:
+  #   tmc_qc: False
+  #   options:
+  #     - --draw-collection "PieRing"
   
-  make-tree-4:
-    prior: "make-tree-3"
-    options:
-      - --draw-collection "PieRing"
+  # make-tree-4:
+  #   prior: "make-tree-3"
+  #   options:
+  #     - --draw-collection "PieRing"
 
 
 plot_method:
