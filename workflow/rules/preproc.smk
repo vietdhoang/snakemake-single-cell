@@ -1,4 +1,4 @@
-localrules: mtx_to_h5ad, h5ad2csv, merge_samples, merge_label_files
+localrules: mtx_to_h5ad, h5ad_to_csv, merge_samples, merge_label_files
 ruleorder: merge_samples > qc
 
 # Converts gene-barcode matricies to h5ad format
