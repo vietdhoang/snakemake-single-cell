@@ -1,5 +1,3 @@
-localrules: tmc_maketree_prior
-
 # The rule for clustering.
 # Requires that dimensionality reduction has been run first. 
 # Like the dim_reduce rule, it calls a specified function in cluster.py
@@ -7,11 +5,11 @@ localrules: tmc_maketree_prior
 rule cluster:
     input:
         (f"{config['output_dir']}/{{sample}}/dim_reduce/"
-         f"mtx_{{qc_method}}_{{dr_method}}.h5ad")
+         f"mtx_{{filter_method}}_{{norm_method}}_{{dr_method}}.h5ad")
     output:
         # c_method must be a name of a script in the cluster directory
         (f"{config['output_dir']}/{{sample}}/cluster/"
-         f"mtx_{{qc_method}}_{{dr_method}}_{{c_method}}.h5ad")
+         f"mtx_{{filter_method}}_{{norm_method}}_{{dr_method}}_{{c_method}}.h5ad")
     conda:
         "../envs/cluster.yaml"
     script:
@@ -23,7 +21,7 @@ rule tmc_maketree:
         get_maketree_input
     output:
         (f"{config['output_dir']}/{{sample}}/too-many-cells/"
-         f"{{maketree}}/{{qc_method}}/{{maketree}}.done")
+         f"{{maketree}}/{{filter_method}}/{{norm_method}}/{{maketree}}.done")
     
     params:
         parameters = get_maketree_params
@@ -34,33 +32,37 @@ rule tmc_maketree:
     shell:
         (      
             f"mkdir -p {config['output_dir']}/{{wildcards.sample}}/"
-            f"too-many-cells/{{wildcards.maketree}}/{{wildcards.qc_method}} && "
+            f"too-many-cells/{{wildcards.maketree}}/"
+            f"{{wildcards.filter_method}}/{{wildcards.norm_method}} && "
 
             f"too-many-cells make-tree {{params.parameters}} && "
 
             f"touch {config['output_dir']}/{{wildcards.sample}}/"
-            f"too-many-cells/{{wildcards.maketree}}/{{wildcards.qc_method}}/"
-            f"{{wildcards.maketree}}.done"
+            f"too-many-cells/{{wildcards.maketree}}/{{wildcards.filter_method}}/"
+            f"{{wildcards.norm_method}}/{{wildcards.maketree}}.done"
         )
 
 
 rule tmc_maketree_prior:
     input:    
         (f"{config['output_dir']}/{{sample}}/too-many-cells/"
-         f"{{prior}}/{{qc_method}}/{{prior}}.done")        
+         f"{{prior}}/{{filter_method}}/{{norm_method}}/{{prior}}.done")        
     output:
         (f"{config['output_dir']}/{{sample}}/too-many-cells/"
-         f"{{maketree}}/{{qc_method}}/{{prior}}.prior.{{maketree}}.done")
+         f"{{maketree}}/{{filter_method}}/{{norm_method}}/"
+         f"{{prior}}.prior.{{maketree}}.done")
     params:
         parameters = get_maketree_prior_params
     shell:
         (   
             f"mkdir -p {config['output_dir']}/{{wildcards.sample}}/"
-            f"too-many-cells/{{wildcards.maketree}}/{{wildcards.qc_method}} && "
+            f"too-many-cells/{{wildcards.maketree}}/"
+            f"{{wildcards.filter_method}}/{{wildcards.norm_method}} && "
 
             f"too-many-cells make-tree {{params.parameters}} && "
 
             f"touch {config['output_dir']}/{{wildcards.sample}}/"
-            f"too-many-cells/{{wildcards.maketree}}/{{wildcards.qc_method}}/"
+            f"too-many-cells/{{wildcards.maketree}}/"
+            f"{{wildcards.filter_method}}/{{wildcards.norm_method}}/"
             f"{{wildcards.prior}}.prior.{{wildcards.maketree}}.done"
         )

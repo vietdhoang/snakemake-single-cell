@@ -107,7 +107,11 @@ if __name__ == "__main__":
             )
             labels = [snakemake.wildcards.c_method]
         
-        prefix = f"scatter_{snakemake.wildcards.qc_method}_{snakemake.wildcards.dr_method}"
+        prefix = (
+            f"scatter_{snakemake.wildcards.filter_method}_"
+            f"{snakemake.wildcards.norm_method}_"
+            f"{snakemake.wildcards.dr_method}"
+        )
         use_rep = snakemake.wildcards.dr_method
 
         scatter(
