@@ -59,8 +59,8 @@ def get_merge_samples_input(wildcards):
     i = 1
     while exists(f"input_{i}", config['inputs']):
         inputs.append(
-            (f"{config['output_dir']}/input_{i}/qc/"
-            f"mtx_{wildcards.qc_method}.h5ad")
+            (f"{config['output_dir']}/input_{i}/norm/"
+            f"mtx_{wildcards.filter_method}_{wildcards.norm_method}.h5ad")
         )
         i += 1
             
@@ -88,7 +88,7 @@ def get_maketree_input(wildcards):
     inputs = []   
     
     # If the user decides to not skip the preprocessing of too-many-cells
-    if wildcards.qc_method == "tmc_qc":
+    if wildcards.norm_method == "tmc_norm":
         #  If the sample's name is not "merged"
         if wildcards.sample == "merged":
             # Append the path of all inputs
@@ -121,8 +121,8 @@ def get_maketree_input(wildcards):
     else: 
         # Append qc'd matrix csv file to inputs
         inputs.append(
-            (f"{config['output_dir']}/{wildcards.sample}/qc/"
-             f"h5ad2csv/mtx_{wildcards.qc_method}.csv")
+            (f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
+             f"mtx_{wildcards.filter_method}_{wildcards.norm_method}.csv")
         )
 
         # Append corresponding label file for that csv file if it exists
@@ -134,14 +134,14 @@ def get_maketree_input(wildcards):
         if (wildcards.sample == "merged"): 
             if exists('label_path', config['inputs'][first_input]):
                 inputs.append(
-                    (f"{config['output_dir']}/{wildcards.sample}/qc/"
-                     f"h5ad2csv/label_{wildcards.qc_method}.csv")
+                    (f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
+                     f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv")
                 )
         
         elif exists('label_path', config['inputs'][wildcards.sample]):
             inputs.append(
-                (f"{config['output_dir']}/{wildcards.sample}/qc/"
-                f"h5ad2csv/label_{wildcards.qc_method}.csv")
+                (f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
+                f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv")
             )
 
     return inputs
@@ -158,7 +158,7 @@ def get_maketree_params(wildcards):
     first_input = [*config['inputs'].keys()][0]
 
     # If the user decides to not skip the preprocessing of too-many-cells
-    if wildcards.qc_method == "tmc_qc":
+    if wildcards.norm_method == "tmc_norm":
         # If the sample's name is not "merged"
         if wildcards.sample == "merged":
             for input in config['inputs']:
@@ -190,8 +190,11 @@ def get_maketree_params(wildcards):
     else: 
         # Append qc'd matrix csv file to inputs
         inputs.append(
-            (f"--matrix-path {config['output_dir']}/{wildcards.sample}/qc/"
-             f"h5ad2csv/mtx_{wildcards.qc_method}.csv")
+            (
+                f"--matrix-path "
+                f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
+                f"mtx_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+            )
         )
 
         # Append corresponding label file for that csv file (if it exists).
@@ -202,20 +205,28 @@ def get_maketree_params(wildcards):
         if (wildcards.sample == "merged"): 
             if exists('label_path', config['inputs'][first_input]):
                 inputs.append(
-                    (f"--labels-file {config['output_dir']}/{wildcards.sample}/"
-                     f"qc/h5ad2csv/label_{wildcards.qc_method}.csv")
+                    (
+                        f"--labels-file "
+                        f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
+                        f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+                    )
             )   
         
         elif exists('label_path', config['inputs'][wildcards.sample]):
             inputs.append(
-                (f"--labels-file {config['output_dir']}/{wildcards.sample}/qc/"
-                 f"h5ad2csv/label_{wildcards.qc_method}.csv")
+                (
+                    f"--labels-file "
+                    f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
+                    f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+                )
             )
 
     inputs_str = " ".join(inputs)
     options_str = " ".join(options)
-    output_dir = (f"{config['output_dir']}/{wildcards.sample}/"
-                  f"too-many-cells/{wildcards.maketree}/{wildcards.qc_method}")   
+    output_dir = (
+        f"{config['output_dir']}/{wildcards.sample}/too-many-cells/"
+        f"{wildcards.maketree}/{wildcards.filter_method}/{wildcards.norm_method}"
+    )   
     
     params = f"{inputs_str} {options_str} --output {output_dir} > {output_dir}/cluster.csv"
 
@@ -230,12 +241,14 @@ def get_maketree_prior_params(wildcards):
     # Get the first input (input_1)
     first_input = [*config['inputs'].keys()][0]
     
-    if wildcards.qc_method == "tmc_qc":    
+    if wildcards.norm_method == "tmc_norm":    
         if wildcards.sample == "merged": 
             if exists('label_path', config['inputs'][first_input]):
                 options.insert(0, 
-                    (f"--labels-file {config['output_dir']}/{wildcards.sample}/"
-                     f"too-many-cells/{wildcards.prior}/merged_labels.csv")
+                    (
+                        f"--labels-file {config['output_dir']}/{wildcards.sample}/"
+                        f"too-many-cells/{wildcards.prior}/merged_labels.csv"
+                    )
                 )
         elif exists('label_path', config['inputs'][wildcards.sample]):
             options.insert(0,
@@ -246,21 +259,32 @@ def get_maketree_prior_params(wildcards):
         if (wildcards.sample == "merged"): 
             if exists('label_path', config['inputs'][first_input]):
                 options.insert(0,
-                    (f"--labels-file {config['output_dir']}/{wildcards.sample}/"
-                     f"qc/h5ad2csv/label_{wildcards.qc_method}.csv")
+                    (
+                        f"--labels-file "
+                        f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
+                        f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+                    )
                 )
             
         elif exists('label_path', config['inputs'][wildcards.sample]):
             options.insert(0,
-                (f"--labels-file {config['output_dir']}/{wildcards.sample}/qc/"
-                 f"h5ad2csv/label_{wildcards.qc_method}.csv")
+                (
+                    f"--labels-file "
+                    f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
+                    f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv")
             )
     
-    prior = (f"{config['output_dir']}/{wildcards.sample}/"
-             f"too-many-cells/{wildcards.prior}/{wildcards.qc_method}")
+    prior = (
+        f"{config['output_dir']}/{wildcards.sample}/too-many-cells/"
+        f"{wildcards.prior}/{wildcards.filter_method}/{wildcards.norm_method}"
+    )
+    
     options_str = " ".join(options)
-    output_dir = (f"{config['output_dir']}/{wildcards.sample}/"
-                  f"too-many-cells/{wildcards.maketree}/{wildcards.qc_method}")
+    
+    output_dir = (
+        f"{config['output_dir']}/{wildcards.sample}/too-many-cells/"
+        f"{wildcards.maketree}/{wildcards.filter_method}/{wildcards.norm_method}"
+    )
 
     params = (f"--prior {prior} {options_str} --output {output_dir} "
               f"> {output_dir}/cluster.csv")

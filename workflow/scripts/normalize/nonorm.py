@@ -8,10 +8,10 @@ from typing import Union
 sc.settings.verbosity = 0
 
 
-def noqc(path_in: Union[str, bytes, os.PathLike],
-         path_out: Union[str, bytes, os.PathLike]) -> None:
-    '''Don't perfom QC on the data. Essentially rename the input file so that
-    it still follows the workflow naming convention
+def nonorm(path_in: Union[str, bytes, os.PathLike],
+           path_out: Union[str, bytes, os.PathLike]) -> None:
+    '''Don't perfom normalization on the data. Essentially rename the input file
+    so that it still follows the workflow naming convention
 
     Args:
         path_in: Path to input h5ad file
@@ -28,6 +28,6 @@ def noqc(path_in: Union[str, bytes, os.PathLike],
 
 if __name__ == "__main__":
     if 'snakemake' in globals():
-        noqc(snakemake.input[0], snakemake.output[0])    
+        nonorm(snakemake.input[0], snakemake.output[0])    
     else:
         fire.Fire()

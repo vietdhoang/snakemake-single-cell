@@ -2,6 +2,71 @@ import itertools
 import os
 from typing import Final, List, Union
 
+
+def get_core_output() -> List[str]:
+    '''Determine the list of desired output based off what the user defined in
+    the config files. The core output includes output from filtering,
+    normalization, dimensionality reduction and clustering.
+
+    Returns:
+        List of strings where each element is an output file from furtherest
+        point downstream in the pipeline. For example, if the user only 
+        wants dimensionality reduction, then the output list will contain 
+        outputs of dimensionality reduction. If the user wants clustering,
+        the the output list will contain outputs for clustering instead since
+        clustering is further downstream. There is no need to add the output
+        for dimensionality reduction since that will automatically be generated
+        anyway.
+    '''
+
+    core_output = []
+
+    if exists('cluster_method', config):
+        # Here we only add the clustering outputs to final_output because
+        # Snakemake will automatically produce all other upstream files, such as
+        # the dimensionality reduction outputs.
+        core_output.extend(
+            expand(
+                ("cluster/mtx_{filter}_{norm}_{dimred}_{cluster}.h5ad"),
+                filter=config['filter_method'],
+                norm=config['norm_method'],
+                dimred=config['dim_reduce_method'],
+                cluster=config['cluster_method']
+            )
+        )
+    
+    elif exists('dim_reduce_method', config):
+        # Here we only add the dimensionality reduction outputs to final_output
+        # for the same reason as above.
+        core_output.extend(
+            expand(
+                ("dim_reduce/mtx_{filter}_{norm}_{dimred}.h5ad"),
+                filter=config['filter_method'],
+                norm=config['norm_method'],
+                dimred=config['dim_reduce_method']
+            )
+        )
+    
+    elif exists('norm_method', config):
+        core_output.extend(
+            expand(
+                ("norm/mtx_{filter}_{norm}.h5ad"),
+                filter=config['filter_method'],
+                norm=config['norm_method']
+            )
+        )
+    
+    elif exists('filter_method', config):
+        core_output.extend(
+            expand(
+                ("filter/mtx_{filter}_{norm}.h5ad"),
+                filter=config['filter_method']
+            )
+        )
+
+    return core_output
+    
+
 def get_plots() -> List[str]:
     '''Determine the list of desired plots based off what the user
     defined in the config files
@@ -23,8 +88,9 @@ def get_plots() -> List[str]:
             and config['plot_method']['scatter']['use_labels']):
             plot_output.extend(
                 expand(
-                    "figures/labels/scatter_{qc}_{dr}_{l}.html",
-                    qc=config['qc_method'],
+                    "figures/labels/scatter_{filter}_{norm}_{dr}_{l}.html",
+                    filter=config['filter_method'],
+                    norm=config['norm_method'],
                     dr=config['plot_method']['scatter']['dim_reduce'],
                     l=config['label_file']['labels']
                 )                 
@@ -33,8 +99,9 @@ def get_plots() -> List[str]:
         else:
             plot_output.extend(
                 expand(
-                    "figures/no_labels/scatter_{qc}_{dr}.html",
-                    qc=config['qc_method'], 
+                    "figures/no_labels/scatter_{filter}_{norm}_{dr}.html",
+                    filter=config['filter_method'],
+                    norm=config['norm_method'],
                     dr=config['plot_method']['scatter']['dim_reduce']
                 )
             )        
@@ -43,8 +110,9 @@ def get_plots() -> List[str]:
             and exists('cluster_method', config)):            
             plot_output.extend(
                 expand(
-                    "figures/cluster_assignments/scatter_{qc}_{dr}_{c}.html", 
-                    qc=config['qc_method'],
+                    "figures/cluster_assignments/scatter_{filter}_{norm}_{dr}_{c}.html", 
+                    filter=config['filter_method'],
+                    norm=config['norm_method'],
                     dr=config['plot_method']['scatter']['dim_reduce'],
                     c=config['plot_method']['scatter']['cluster'] 
                 )
@@ -75,13 +143,14 @@ def get_too_many_cells_output() -> List[str]:
 
     for key in dict_tmc:
         if 'make-tree' in key:            
-            # If only prior exists but not comb_options
+            # If the make-tree uses a prior
             if exists('prior', dict_tmc[key]):                
                 if dict_tmc[dict_tmc[key]['prior']]['tmc_qc']:
                     tmc_output.extend(
                         expand(
                             (f"{config['output_dir']}/{{sample}}/too-many-cells/"
-                             f"{key}/tmc_qc/{dict_tmc[key]['prior']}.prior.{key}.done"),
+                             f"{key}/tmc_filter/tmc_norm/"
+                             f"{dict_tmc[key]['prior']}.prior.{key}.done"),
                             sample=samples
                         )
                     )
@@ -89,19 +158,21 @@ def get_too_many_cells_output() -> List[str]:
                     tmc_output.extend(
                         expand(
                             (f"{config['output_dir']}/{{sample}}/too-many-cells/"
-                             f"{key}/{{qc_method}}/{dict_tmc[key]['prior']}.prior.{key}.done"),
+                             f"{key}/{{filter_method}}/{{norm_method}}"
+                             f"{dict_tmc[key]['prior']}.prior.{key}.done"),
                             sample=samples,
-                            qc_method = config['qc_method']
+                            filter_method=config['filter_method'],
+                            norm_method=config['norm_method'] 
                         )
                     )
                 
-            # If neither comb_options nor prior exist
+            # If the make-tree doesn't contain a prior
             else:
                 if dict_tmc[key]['tmc_qc']:
                     tmc_output.extend(
                         expand(
                             (f"{config['output_dir']}/{{sample}}/too-many-cells/"
-                             f"{key}/tmc_qc/{key}.done"),
+                             f"{key}/tmc_filter/tmc_norm/{key}.done"),
                             sample=samples
                         )
                     )
@@ -109,9 +180,10 @@ def get_too_many_cells_output() -> List[str]:
                     tmc_output.extend(
                         expand(
                             (f"{config['output_dir']}/{{sample}}/too-many-cells/"
-                             f"{key}/{{qc_method}}/{key}.done"),
+                             f"{key}/{{filter_method}}/{{norm_method}}/{key}.done"),
                             sample=samples,
-                            qc_method = config['qc_method']
+                            filter_method = config['filter_method'],
+                            norm_method = config['norm_method']
                         )
                     )
     
@@ -128,47 +200,11 @@ def get_final_output() -> List[str]:
     
     final_output = []   # List of desired output files
 
-    # If the user selected qc, dimensionality reduction and clustering
-    if (exists('qc_method', config) 
-        and exists('dim_reduce_method', config) 
-        and exists('cluster_method', config)):
-        
-        # Here we only add the clustering outputs to final_output because
-        # Snakemake will automatically produce all other upstream files, such as
-        # the dimensionality reduction outputs.
-        final_output.extend(
-            expand(
-                ("cluster/mtx_{qc}_{dimred}_{cluster}.h5ad"),
-                qc=config['qc_method'],
-                dimred=config['dim_reduce_method'],
-                cluster=config['cluster_method']
-            )
-        )
-    
-    # If the user selected qc and dimensionality reduction only
-    elif (exists('qc_method', config) 
-          and exists('dim_reduce_method', config)):
+    # Get core output (filtering, normalization, dim reduction, clustering)
+    final_output.extend(get_core_output())    
 
-        # Here we only add the dimensionality reduction outputs to final_output
-        # for the same reason as above.
-        final_output.extend(
-            expand(
-                "dim_reduce/mtx_{qc}_{dimred}.h5ad",
-                qc=config['qc_method'],
-                dimred=config['dim_reduce_method']
-            )
-        )
-    
-    # If the user selected qc only
-    elif (exists('qc_method', config)):
-
-        # Add only qc outputs to final_output
-        final_output.extend(
-            expand(
-                "qc/mtx_{qc}.h5ad",
-                qc=config['qc_method']
-            )
-        )
+    # Get output plots
+    final_output.extend(get_plots())
 
     # Takes everything from other_outputs in the config file and appends it
     # to the list of final outputs.
@@ -176,10 +212,6 @@ def get_final_output() -> List[str]:
         final_output.extend(
             expand("{output}", output=config['other_outputs'])
         )
-    
-
-    final_output.extend(get_plots())
-
 
     # Prepend the output directory path and sample name to each of the 
     # elements in the list of final outputs
@@ -206,6 +238,7 @@ def get_final_output() -> List[str]:
             for file in final_output
         ]
 
+    # Get too-many-cells output
     final_output.extend(get_too_many_cells_output())
         
     return final_output

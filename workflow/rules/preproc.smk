@@ -1,5 +1,4 @@
-localrules: mtx_to_h5ad, h5ad_to_csv, merge_samples, merge_label_files
-ruleorder: merge_samples > qc
+ruleorder: merge_samples > normalize
 
 # Converts gene-barcode matricies to h5ad format
 rule mtx_to_h5ad:
@@ -27,23 +26,34 @@ rule h5ad_to_csv:
         "../scripts/io/h5ad_to_csv.py"
 
 
-rule qc:
+rule filter:
     input:
         f"{config['output_dir']}/{{sample}}/mtx.h5ad"
     output:
-        # qc_method must be a name of a script in the qc directory
-        f"{config['output_dir']}/{{sample}}/qc/mtx_{{qc_method}}.h5ad"
+        f"{config['output_dir']}/{{sample}}/filter/mtx_{{filter_method}}.h5ad"
     conda:
         "../envs/preproc.yaml"
     script:
-        "../scripts/qc/{wildcards.qc_method}.py"
+        "../scripts/filter/{wildcards.filter_method}.py"
+
+
+rule normalize:
+    input:
+        f"{config['output_dir']}/{{sample}}/filter/mtx_{{filter_method}}.h5ad"
+    output:
+        # norm_method must be a name of a script in the norm directory
+        f"{config['output_dir']}/{{sample}}/norm/mtx_{{filter_method}}_{{norm_method}}.h5ad"
+    conda:
+        "../envs/preproc.yaml"
+    script:
+        "../scripts/normalize/{wildcards.norm_method}.py"
 
 
 rule merge_samples:
     input:
         get_merge_samples_input
     output:
-        f"{config['output_dir']}/merged/qc/mtx_{{qc_method}}.h5ad"
+        f"{config['output_dir']}/merged/norm/mtx_{{filter_method}}_{{norm_method}}.h5ad"
     conda:
         "../envs/preproc.yaml"
     script:

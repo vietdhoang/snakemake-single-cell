@@ -12,19 +12,18 @@ include: "rules/dim_reduce.smk"
 include: "rules/cluster.smk"
 include: "rules/plot.smk"
 
+localrules: create_all_conda_envs, create_conda_env
 
 wildcard_constraints:
     # A can be anything that doesn't contain a 
     # '\', '.',  '/', or a whitespace
-    qc_method = get_wc_constraint('qc_method') + "|tmc_qc",
+    filter_method = get_wc_constraint('filter_method') + "|tmc_filter",
+    norm_method = get_wc_constraint('norm_method') + "|tmc_norm",
     dr_method = get_wc_constraint('dim_reduce_method'),
     c_method = get_wc_constraint('cluster_method'),
     prior = "[^\\/\.\s]*",
     maketree = "[^\\/\.\s]*",
     sample = "[^\\/\.\s]*"
-
-
-localrules: all
 
 onstart:
     if not os.path.exists(config['output_dir']):
@@ -42,6 +41,7 @@ rule create_all_conda_envs:
         "dim_reduce_env.done",
         "plot_env.done",
         "preproc_env.done"
+
 
 rule create_conda_env:
     output:
