@@ -118,7 +118,7 @@ class Filter:
                                 ~self.adata.var_names.isin(list(var_bl))]
 
 
-    def MAD(self, score: float = 1.2) -> None:
+    def MAD(self, m: float = 2.5) -> None:
         '''Mean absolute deviation filtering'''
         pass
 
