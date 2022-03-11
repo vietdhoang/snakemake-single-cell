@@ -118,19 +118,19 @@ class Filter:
                                 ~self.adata.var_names.isin(list(var_bl))]
 
 
-    def MAD(self, m: float = 2.5) -> None:
+    def MAD(self, mad_threshold: float = 2.5) -> None:
         '''Mean absolute deviation filtering'''
         pass
 
 
-    def zscore(self, z: float = 1.96) -> None:
+    def zscore(self, z_threshold: float = 1.96) -> None:
         '''z-score filtering'''
         
         def get_cutoffs(s: pd.Series) -> Tuple(float):
             std = s.std()
             mean = s.mean()
-            lower_cutoff = -z*std + mean
-            upper_cutoff = -z*std + mean
+            lower_cutoff = -z_threshold*std + mean
+            upper_cutoff = -z_threshold*std + mean
 
             return (lower_cutoff, upper_cutoff)
 
