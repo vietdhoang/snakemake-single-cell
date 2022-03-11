@@ -31,10 +31,12 @@ rule filter:
         f"{config['output_dir']}/{{sample}}/mtx.h5ad"
     output:
         f"{config['output_dir']}/{{sample}}/filter/mtx_{{filter_method}}.h5ad"
+    params:
+        filter_method = wildcards.filter_method
     conda:
         "../envs/preproc.yaml"
     script:
-        "../scripts/filter/{wildcards.filter_method}.py"
+        "../scripts/filter/filter.py"
 
 
 rule normalize:
