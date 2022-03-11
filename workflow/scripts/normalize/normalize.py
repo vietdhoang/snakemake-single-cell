@@ -58,7 +58,7 @@ class Normalize:
         '''Normalize by dividing each observation by the sum of their row vector
         '''
         df = self.adata.to_df()
-        df.apply(lambda row: row / row.sum())
+        df.apply(lambda row: row / row.sum(), axis=1)
 
         self.adata.X = df
 
@@ -77,7 +77,7 @@ class Normalize:
         '''Normalize by dividing each observation by the median of their row vector
         '''
         df = self.adata.to_df()
-        df.apply(lambda row: row / row.median())
+        df.apply(lambda row: row / row.median(), axis=1)
 
         self.adata.X = df
 
@@ -87,7 +87,7 @@ class Normalize:
         of their row vector
         '''
         df = self.adata.to_df()
-        df.apply(lambda row: row / row.quantile(0.75))
+        df.apply(lambda row: row / row.quantile(0.75), axis=1)
 
         self.adata.X = df
 
