@@ -5,7 +5,7 @@ import scanpy as sc
 
 from anndata import AnnData
 from scipy.stats import zscore
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Callable
 
 # Set verbosity to 0 which means only print out errors
 sc.settings.verbosity = 0
@@ -36,7 +36,8 @@ class Filter:
 
 
     def run(self) -> None:
-        self.filter_method(**self.filter_method_kwargs)
+        print(self.filter_method)
+        self.filter_method(self, **self.filter_method_kwargs)
     
     
     @staticmethod
@@ -57,84 +58,8 @@ class Filter:
         return df.query(condition).index.tolist()        
     
     
-    def nofilter(self) -> None:
-        '''Don't filter the data. Essentially rename the input file so that
-        it still follows the workflow naming convention
-
-        Args:
-            path_in: Path to input h5ad file
-            path_out: Path where the output h5ad file will be written.
-        '''
-        pass
-
-    
-    def IQR(self, k: float = 1.5) -> None:
-        '''Interquartile range outlier filtering.'''
-
-        # Observation and variable blacklist (ones that will be filtered out)
-        obs_bl = {}
-        var_bl = {}
-
-        # Total cell UMI count filtering (observation filtering)
-        # Filter out cells that have too high or too low total UMI counts across
-        # all genes
-        q1, q3 = self.adata.obs['total_counts'].quantile([0.25, 0.75])
-        obs_bl = obs_bl.union(set(Filter._create_blacklist(self.adata.obs, 
-                                                           'total_counts',
-                                                            lower_cutoff=k*q1,
-                                                            upper_cutoff=k*q3)))
-        
-        # Number of genes filtering (observation filtering)
-        # Filter out cells that have too few genes expressed.
-        q1, q3 = self.adata.obs['total_genes_by_counts'].quantile([0.25, 0.75])
-        obs_bl = obs_bl.union(set(Filter._create_blacklist(self.adata.obs, 
-                                                           'total_genes_by_counts',
-                                                            lower_cutoff=k*q1)))
-
-        # Percentage mitochondrial gene filtering (observation filtering)
-        # Filter out cells that have too high or too low percentage of total
-        # counts that are mitochondrial
-        q1, q3 = self.adata.obs['pct_counts_mt'].quantile([0.25, 0.75])
-        obs_bl = obs_bl.union(set(Filter._create_blacklist(self.adata.obs, 
-                                                           'pct_counts_mt',
-                                                            lower_cutoff=k*q1,
-                                                            upper_cutoff=k*q3)))
-        
-        # Total gene UMI count filtering (variable filtering)
-        # Filter out genes that have too low total UMI counts across all cells
-        q1, q3 = self.adata.obs['total_counts'].quantile([0.25, 0.75])
-        var_bl = var_bl.union(set(Filter._create_blacklist(self.adata.var, 
-                                                           'total_counts',
-                                                            lower_cutoff=k*q1)))
-        
-        # Number of cells filtering (variable filtering)
-        # Filter out genes that have too few cells that express them
-        q1, q3 = self.adata.obs['n_cells_by_counts'].quantile([0.25, 0.75])
-        var_bl = var_bl.union(set(Filter._create_blacklist(self.adata.var, 
-                                                           'n_cells_by_counts',
-                                                            lower_cutoff=k*q1)))
-        
-        self.adata = self.adata[~self.adata.obs_names.isin(list(obs_bl)), 
-                                ~self.adata.var_names.isin(list(var_bl))]
-
-
-    def MAD(self, mad_threshold: float = 2.5) -> None:
-        '''Mean absolute deviation filtering'''
-        pass
-
-
-    def zscore(self, z_threshold: float = 1.96) -> None:
-        '''z-score filtering'''
-        
-        def get_cutoffs(s: pd.Series) -> Tuple(float):
-            std = s.std()
-            mean = s.mean()
-            lower_cutoff = -z_threshold*std + mean
-            upper_cutoff = -z_threshold*std + mean
-
-            return (lower_cutoff, upper_cutoff)
-
-        
+    @staticmethod
+    def _blacklist(self, get_cutoffs: Callable) -> Tuple[List[float], List[float]]:
         # Observation and variable blacklist (ones that will be filtered out)
         obs_bl = {}
         var_bl = {}
@@ -178,9 +103,58 @@ class Filter:
         var_bl = var_bl.union(set(Filter._create_blacklist(self.adata.var, 
                                                            'n_cells_by_counts',
                                                             lower_cutoff=lo)))
+        return (list(obs_bl), list(var_bl))
+
+
+    def nofilter(self) -> None:
+        '''Don't filter the data. Essentially rename the input file so that
+        it still follows the workflow naming convention
+
+        Args:
+            path_in: Path to input h5ad file
+            path_out: Path where the output h5ad file will be written.
+        '''
+        pass
+
+    
+    def IQR(self, k: float = 1.5) -> None:
+        '''Interquartile range outlier filtering.'''
         
-        self.adata = self.adata[~self.adata.obs_names.isin(list(obs_bl)), 
-                                ~self.adata.var_names.isin(list(var_bl))]
+        def get_cutoffs(s: pd.Series) -> Tuple(float):
+            q1, q3 = s.quantile([0.25, 0.75])
+            iqr = q3 - q1
+            hi = q3 + k*iqr
+            lo = q1 - k*iqr
+
+            return (lo, hi)
+
+        obs_blacklist, var_blacklist = Filter._blacklist(get_cutoffs)
+        
+        self.adata = self.adata[~self.adata.obs_names.isin(obs_blacklist), 
+                                ~self.adata.var_names.isin(var_blacklist)]
+
+
+    def MAD(self, mad_threshold: float = 2.5) -> None:
+        '''Mean absolute deviation filtering'''
+        pass
+
+
+    def zscore(self, z_threshold: float = 1.96) -> None:
+        '''z-score filtering'''
+        
+        def get_cutoffs(s: pd.Series) -> Tuple(float):
+            std = s.std()
+            mean = s.mean()
+            lower_cutoff = -z_threshold*std + mean
+            upper_cutoff = z_threshold*std + mean
+
+            return (lower_cutoff, upper_cutoff)
+
+        
+        obs_blacklist, var_blacklist = Filter._blacklist(get_cutoffs)
+        
+        self.adata = self.adata[~self.adata.obs_names.isin(obs_blacklist), 
+                                ~self.adata.var_names.isin(var_blacklist)]
 
 
 def main(snakemake) -> None:

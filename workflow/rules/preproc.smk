@@ -32,7 +32,7 @@ rule filter:
     output:
         f"{config['output_dir']}/{{sample}}/filter/mtx_{{filter_method}}.h5ad"
     params:
-        filter_method = wildcards.filter_method
+        filter_method = lambda wildcards: wildcards.filter_method
     conda:
         "../envs/preproc.yaml"
     script:
