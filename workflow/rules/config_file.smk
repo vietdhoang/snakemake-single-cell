@@ -99,7 +99,7 @@ def get_plots() -> List[str]:
         else:
             plot_output.extend(
                 expand(
-                    "figures/no_labels/scatter_{filter}_{norm}_{dr}.html",
+                    "figures/dim_reduce/scatter_{filter}_{norm}_{dr}.html",
                     filter=config['filter_method'],
                     norm=config['norm_method'],
                     dr=config['plot_method']['scatter']['dim_reduce']
@@ -110,15 +110,50 @@ def get_plots() -> List[str]:
             and exists('cluster_method', config)):            
             plot_output.extend(
                 expand(
-                    "figures/cluster_assignments/scatter_{filter}_{norm}_{dr}_{c}.html", 
+                    "figures/cluster/scatter_{filter}_{norm}_{dr}_{c}.html", 
                     filter=config['filter_method'],
                     norm=config['norm_method'],
                     dr=config['plot_method']['scatter']['dim_reduce'],
                     c=config['plot_method']['scatter']['cluster'] 
                 )
             )
-    
+
     return plot_output
+
+
+def foo():
+    plot_output = []
+    samples = [*config['inputs'].keys()]
+    plot_output.extend(
+        expand(
+            (f"{config['output_dir']}/"
+             "{sample}/before_filter/{filter}/{plot}.html"),
+             sample=samples,
+             filter=config['filter_method'],
+             plot=["density_cells_n_genes_by_counts", 
+                  "density_cells_total_counts", 
+                  "density_cells_pct_counts_mt",
+                  "density_genes_n_cells_by_counts"
+                  "density_genes_total_counts"]
+        )
+    )
+
+    plot_output.extend(
+        expand(
+            (f"{config['output_dir']}/"
+             "{sample}/after_filter/{filter}/{plot}.html"),
+             sample=samples,
+             filter=config['filter_method'],
+             plot=["density_cells_n_genes_by_counts", 
+                  "density_cells_total_counts", 
+                  "density_cells_pct_counts_mt",
+                  "density_genes_n_cells_by_counts"
+                  "density_genes_total_counts"]
+        )
+    )
+
+    return plot_output
+    
 
 
 def get_too_many_cells_output() -> List[str]:
@@ -158,7 +193,7 @@ def get_too_many_cells_output() -> List[str]:
                     tmc_output.extend(
                         expand(
                             (f"{config['output_dir']}/{{sample}}/too-many-cells/"
-                             f"{key}/{{filter_method}}/{{norm_method}}"
+                             f"{key}/{{filter_method}}/{{norm_method}}/"
                              f"{dict_tmc[key]['prior']}.prior.{key}.done"),
                             sample=samples,
                             filter_method=config['filter_method'],
@@ -240,5 +275,7 @@ def get_final_output() -> List[str]:
 
     # Get too-many-cells output
     final_output.extend(get_too_many_cells_output())
+
+    final_output.extend(foo())
         
     return final_output

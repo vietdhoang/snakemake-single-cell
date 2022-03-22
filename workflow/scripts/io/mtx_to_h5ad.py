@@ -7,6 +7,17 @@ import sys
 from typing import List, Union
 
 
+def _get_qc_metrics(adata) -> None:
+    # Add an annotation labeling mitochondrial genes
+    adata.var['mt'] = adata.var_names.str.startswith('MT-')
+
+    # Calculate QC metrics. These will be used for filtering
+    sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, 
+                                   log1p=False, inplace=True)
+    
+    return adata
+
+
 def mtx_to_h5ad(path_in: Union[str, bytes, os.PathLike],
                 path_out: Union[str, bytes, os.PathLike],
                 path_label: Union[str, bytes, os.PathLike] = None,
@@ -35,6 +46,8 @@ def mtx_to_h5ad(path_in: Union[str, bytes, os.PathLike],
         
         for col_name in labels:
             adata.obs[col_name] = df_labels[col_name].astype('category')
+
+    adata = _get_qc_metrics(adata)
 
     if os.path.splitext(path_out)[1] == '.h5ad':          
         adata.write(path_out)

@@ -2,7 +2,7 @@ channels:
   - conda-forge
   
 dependencies:
-  - python=3.8
+  - python=3.10
   - fire=0.4.0
   - leidenalg=0.8.8
   - louvain=0.7.1
