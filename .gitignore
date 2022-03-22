@@ -130,3 +130,6 @@ dmypy.json
 
 # Snakemake
 .snakemake/
+
+# TODO List
+TODO
