@@ -1,11 +1,15 @@
 import fire
-import os
 import pandas as pd
 import scanpy as sc
+import sys
 
 from anndata import AnnData
-from scipy.stats import zscore
-from typing import Union, List, Tuple, Callable
+from os.path import dirname
+from typing import Callable, Tuple
+
+# Add the scripts directory to Python path and import local files in scripts/
+sys.path.insert(0, dirname(dirname(dirname(__file__))))
+import scripts.core.filter_cutoffs as filter_cutoffs
 
 # Set verbosity to 0 which means only print out errors
 sc.settings.verbosity = 0
@@ -13,45 +17,40 @@ sc.settings.verbosity = 0
 
 class Filter:
 
-    def __init__(self, adata: AnnData, filter_method: str, **kwargs) -> None:
+    def __init__(self, adata: AnnData, method: str, **kwargs) -> None:
         '''Constructor for Filter class'''
         
-        # Convert filter_method (string) into a callable function
+        # Convert method (string) into a callable function
         try:
-            self.filter_method = getattr(Filter, filter_method)        
+            self.method = getattr(Filter, method)        
         
         except AttributeError:
             raise NotImplementedError("{method_name} has not been implemented")
         
-        self.filter_method_kwargs = kwargs
-
-        # Add an annotation labeling mitochondrial genes
-        adata.var['mt'] = adata.var_names.str.startswith('MT-')
-
-        # Calculate QC metrics. These will be used for filtering
-        sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, 
-                                   log1p=False, inplace=True)
-        
+        self.method_kwargs = kwargs
         self.adata = adata
 
 
     def run(self) -> None:
-        print(self.filter_method)
-        self.filter_method(self, **self.filter_method_kwargs)
-    
-    
+        self.adata = Filter.basic_filter(self.adata)
+        self.adata = self.method(self.adata, **self.method_kwargs)
+
+
     @staticmethod
-    def _create_blacklist(df: pd.DataFrame, 
-                          col_name: str, 
-                          lower_cutoff: float = None, 
-                          upper_cutoff: float = None) -> List[str]:
+    def _query(df: pd.DataFrame, 
+               col_name: str, 
+               lower_cutoff: float = None, 
+               upper_cutoff: float = None) -> list[str]:
         
         if not upper_cutoff and not lower_cutoff:
             raise ValueError("At least one of upper_bound or lower_bound must be True")        
+        
         elif upper_cutoff and lower_cutoff:            
             condition = f"{col_name} < {lower_cutoff} or {col_name} > {upper_cutoff}"        
+        
         elif lower_cutoff:
             condition = f"{col_name} < {lower_cutoff}"
+        
         else:
             condition = f"{col_name} > {upper_cutoff}"
         
@@ -59,54 +58,54 @@ class Filter:
     
     
     @staticmethod
-    def _blacklist(self, get_cutoffs: Callable) -> Tuple[List[float], List[float]]:
+    def _blacklist(get_cutoffs: Callable, adata: AnnData) -> Tuple[list[float]]:
         # Observation and variable blacklist (ones that will be filtered out)
-        obs_bl = {}
-        var_bl = {}
+        obs_bl = set()
+        var_bl = set()
 
         # Total cell UMI count filtering (observation filtering)
         # Filter out cells that have too high or too low total UMI counts across
         # all genes
-        lo, hi = get_cutoffs(self.adata.obs['total_counts'])
-        obs_bl = obs_bl.union(set(Filter._create_blacklist(self.adata.obs, 
-                                                           'total_counts',
-                                                            lower_cutoff=lo,
-                                                            upper_cutoff=hi)))
+        lo, hi = get_cutoffs(adata.obs['total_counts'])
+        obs_bl = obs_bl.union(set(Filter._query(adata.obs, 
+                                                'total_counts',
+                                                lower_cutoff=lo, 
+                                                upper_cutoff=hi)))
         
         # Number of genes filtering (observation filtering)
         # Filter out cells that have too few genes expressed.
-        lo, hi = get_cutoffs(self.adata.obs['total_genes_by_counts'])
-        obs_bl = obs_bl.union(set(Filter._create_blacklist(self.adata.obs, 
-                                                           'total_genes_by_counts',
-                                                            lower_cutoff=lo,
-                                                            upper_cutoff=hi)))
-
+        lo, hi = get_cutoffs(adata.obs['n_genes_by_counts'])
+        obs_bl = obs_bl.union(set(Filter._query(adata.obs, 
+                                                'n_genes_by_counts',
+                                                lower_cutoff=lo,
+                                                upper_cutoff=hi)))
+        
         # Percentage mitochondrial gene filtering (observation filtering)
         # Filter out cells that have too high or too low percentage of total
         # counts that are mitochondrial
-        lo, hi = get_cutoffs(self.adata.obs['pct_counts_mt'])
-        obs_bl = obs_bl.union(set(Filter._create_blacklist(self.adata.obs, 
-                                                           'pct_counts_mt',
-                                                            lower_cutoff=lo,
-                                                            upper_cutoff=hi)))
+        lo, hi = get_cutoffs(adata.obs['pct_counts_mt'])
+        obs_bl = obs_bl.union(set(Filter._query(adata.obs, 
+                                                'pct_counts_mt',
+                                                lower_cutoff=lo,
+                                                upper_cutoff=hi)))
         
         # Total gene UMI count filtering (variable filtering)
         # Filter out genes that have too low total UMI counts across all cells
-        lo, hi = get_cutoffs(self.adata.var['total_counts'])
-        var_bl = var_bl.union(set(Filter._create_blacklist(self.adata.var, 
-                                                           'total_counts',
-                                                            lower_cutoff=lo)))
+        var_bl = var_bl.union(set(Filter._query(adata.var, 
+                                                'total_counts',
+                                                lower_cutoff=lo)))
         
         # Number of cells filtering (variable filtering)
         # Filter out genes that have too few cells that express them
-        lo, hi = get_cutoffs(self.adata.var['n_cells_by_counts'])
-        var_bl = var_bl.union(set(Filter._create_blacklist(self.adata.var, 
-                                                           'n_cells_by_counts',
-                                                            lower_cutoff=lo)))
+        lo, hi = get_cutoffs(adata.var['n_cells_by_counts'])
+        var_bl = var_bl.union(set(Filter._query(adata.var, 
+                                                'n_cells_by_counts',
+                                                lower_cutoff=lo)))
         return (list(obs_bl), list(var_bl))
 
 
-    def nofilter(self) -> None:
+    @staticmethod
+    def nofilter(adata: AnnData) -> AnnData:
         '''Don't filter the data. Essentially rename the input file so that
         it still follows the workflow naming convention
 
@@ -114,58 +113,76 @@ class Filter:
             path_in: Path to input h5ad file
             path_out: Path where the output h5ad file will be written.
         '''
-        pass
+        return adata
 
+
+    @staticmethod
+    def basic_filter(adata: AnnData, 
+                     min_genes: int = 1, 
+                     min_cells: int = 1) -> AnnData:
+        sc.pp.filter_cells(adata, min_genes=min_genes)
+        sc.pp.filter_genes(adata, min_cells=min_cells)
     
-    def IQR(self, k: float = 1.5) -> None:
+        return adata
+
+
+    @staticmethod
+    def IQR(adata: AnnData, k: float = 1.5) -> AnnData:
         '''Interquartile range outlier filtering.'''
         
-        def get_cutoffs(s: pd.Series) -> Tuple(float):
-            q1, q3 = s.quantile([0.25, 0.75])
-            iqr = q3 - q1
-            hi = q3 + k*iqr
-            lo = q1 - k*iqr
-
-            return (lo, hi)
-
-        obs_blacklist, var_blacklist = Filter._blacklist(get_cutoffs)
+        def get_cutoffs(adata: AnnData) -> Tuple[float]:
+            return filter_cutoffs.get_iqr_cutoffs(adata, k=k)
         
-        self.adata = self.adata[~self.adata.obs_names.isin(obs_blacklist), 
-                                ~self.adata.var_names.isin(var_blacklist)]
+        obs_blacklist, var_blacklist = Filter._blacklist(get_cutoffs, adata)
+        
+        adata = adata[~adata.obs_names.isin(obs_blacklist), 
+                      ~adata.var_names.isin(var_blacklist)]
+        
+        return adata
 
 
-    def MAD(self, mad_threshold: float = 2.5) -> None:
+    @staticmethod
+    def MAD(adata: AnnData, threshold: float = 2.5) -> AnnData:
         '''Mean absolute deviation filtering'''
-        pass
+        
+        def get_cutoffs(adata: AnnData) -> Tuple[float]:
+            return filter_cutoffs.get_mad_cutoffs(adata, 
+                                                  threshold=threshold)
+        
+        obs_blacklist, var_blacklist = Filter._blacklist(get_cutoffs, adata)
+        
+        adata = adata[~adata.obs_names.isin(obs_blacklist), 
+                      ~adata.var_names.isin(var_blacklist)]
+        
+        return adata
 
 
-    def zscore(self, z_threshold: float = 1.96) -> None:
+    @staticmethod
+    def zscore(adata: AnnData, threshold: float = 1.96) -> AnnData:
         '''z-score filtering'''
         
-        def get_cutoffs(s: pd.Series) -> Tuple(float):
-            std = s.std()
-            mean = s.mean()
-            lower_cutoff = -z_threshold*std + mean
-            upper_cutoff = z_threshold*std + mean
-
-            return (lower_cutoff, upper_cutoff)
-
+        def get_cutoffs(adata: AnnData) -> Tuple[float]:
+            return filter_cutoffs.get_zscore_cutoffs(adata, 
+                                                     threshold=threshold)
         
-        obs_blacklist, var_blacklist = Filter._blacklist(get_cutoffs)
+        obs_blacklist, var_blacklist = Filter._blacklist(get_cutoffs, adata)
         
-        self.adata = self.adata[~self.adata.obs_names.isin(obs_blacklist), 
-                                ~self.adata.var_names.isin(var_blacklist)]
+        adata = adata[~adata.obs_names.isin(obs_blacklist), 
+                      ~adata.var_names.isin(var_blacklist)]
+        
+        return adata
 
 
 def main(snakemake) -> None:
     # Read in input file 
     adata = sc.read_h5ad(snakemake.input[0])
-   
+    
     # Filter the data using the provided filter method
-    adata_filtered = Filter(adata, snakemake.params.filter_method).run().adata
+    adata_filtered = Filter(adata, snakemake.params.filter_method)
+    adata_filtered.run()
 
     # Write out the file               
-    adata_filtered.write(snakemake.output[0])
+    adata_filtered.adata.write(snakemake.output[0])
 
 
 if __name__ == "__main__":

@@ -30,31 +30,39 @@ run_on_each_sample: False
 output_dir: "/home/viethoang/data/snakemake-single-cell-out"
 
 
-# List the filter method(s) that will be used. If this is left empty or is deleted,
-# then the entire pipeline will be determined by the files in other_outputs
+# List the filter method(s) that will be used. 
 filter_method:
-  # - "nofilter"  # No filtering
+  # - "nofilter"
   - "IQR"
+  # - "zscore"
+  # - "mad" # In development
 
 
 # List the normalization method(s) that will be used.
 norm_method:
-  - "nonorm"    # No normalization
+  # - "nonorm"
+  # - "max"
+  # - "sum"
+  # - "upper_quartile"
+  - "median"
+  # - "quantile"
+  # - "total_count" # In development
+  # - "log1p"
 
 
-# List the dimensionality reduction method(s) that will be used.
-# Each method must correspond EXACTLY to a function in scripts/dim_reduce.py
-# If this is left empty or is deleted, dimensionality reduction as well as 
-# everything downstream will not run (ex. clustering).
+# # List the dimensionality reduction method(s) that will be used.
+# # Each method must correspond EXACTLY to a function in scripts/dim_reduce.py
+# # If this is left empty or is deleted, dimensionality reduction as well as 
+# # everything downstream will not run (ex. clustering).
 dim_reduce_method:
   - "pca"
   - "umap"
-  # - "tsne"
+  - "tsne"
 
 
-# List the clustering method(s) that will be used.
-# Each method must correspond EXACTLY to a function in scripts/cluster.py
-# If this is left empty or is deleted, no clustering will be performed.
+# # List the clustering method(s) that will be used.
+# # Each method must correspond EXACTLY to a function in scripts/cluster.py
+# # If this is left empty or is deleted, no clustering will be performed.
 # cluster_method:
 #   - "leiden"
 #   - "louvain"
@@ -62,45 +70,45 @@ dim_reduce_method:
 
 too-many-cells:
 
-  # make-tree-1:
-  #   tmc_qc: True    
-  #   options:    
-  #     - --filter-thresholds "(200, 1)"
-  #     - --draw-collection "PieRing"
+  make-tree-1:
+    tmc_qc: True    
+    options:    
+      - --filter-thresholds "(200, 1)"
+      - --draw-collection "PieRing"
   
-  # make-tree-2:    
-  #   prior: "make-tree-1"
-  #   options:
-  #     - --draw-node-number
-  #     - --dendrogram-output "tree-node-numbers.svg"
-  #     - --draw-collection "PieRing"
-  #     - --min-size 1
-  #     - --smart-cutoff 4
+  make-tree-2:    
+    prior: "make-tree-1"
+    options:
+      - --draw-node-number
+      - --dendrogram-output "tree-node-numbers.svg"
+      - --draw-collection "PieRing"
+      - --min-size 1
+      - --smart-cutoff 4
 
-  # make-tree-3:
-  #   tmc_qc: False
-  #   options:
-  #     - --draw-collection "PieRing"
+  make-tree-3:
+    tmc_qc: False
+    options:
+      - --draw-collection "PieRing"
   
-  # make-tree-4:
-  #   prior: "make-tree-3"
-  #   options:
-  #     - --draw-collection "PieRing"
+  make-tree-4:
+    prior: "make-tree-3"
+    options:
+      - --draw-collection "PieRing"
 
 
-# plot_method:
+plot_method:
 
-#   scatter:    
-#     use_labels: True   
-#     dim_reduce:
-#       - "pca"
-#       - "umap"
-#       - "tsne"    
-#     cluster:
-#       - "leiden"
-#       - "louvain"
+  scatter:    
+    use_labels: True   
+    dim_reduce:
+      - "pca"
+      - "umap"
+      - "tsne"    
+    cluster:
+      - "leiden"
+      - "louvain"
 
 
-# Alternatively, list the desired output files. This requires knowledge of the 
-# output directory structure and the file naming conventions for this workflow.
-other_outputs:
+# # Alternatively, list the desired output files. This requires knowledge of the 
+# # output directory structure and the file naming conventions for this workflow.
+# other_outputs:

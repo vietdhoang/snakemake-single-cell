@@ -46,7 +46,7 @@ rule normalize:
         # norm_method must be a name of a script in the norm directory
         f"{config['output_dir']}/{{sample}}/norm/mtx_{{filter_method}}_{{norm_method}}.h5ad"
     params:
-        norm_method = wildcards.norm_method,
+        norm_method = lambda wildcards: wildcards.norm_method,
         log = True
     conda:
         "../envs/preproc.yaml"
