@@ -1,5 +1,6 @@
 import numpy as np
 
+from anndata import AnnData
 from functools import wraps
 from typing import Callable, Tuple
 from numpy.typing import ArrayLike

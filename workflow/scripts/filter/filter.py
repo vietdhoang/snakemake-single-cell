@@ -9,7 +9,7 @@ from typing import Callable, Tuple
 
 # Add the scripts directory to Python path and import local files in scripts/
 sys.path.insert(0, dirname(dirname(dirname(__file__))))
-import scripts.core.filter_cutoffs as filter_cutoffs
+import scripts.common.filter_cutoffs as filter_cutoffs
 
 # Set verbosity to 0 which means only print out errors
 sc.settings.verbosity = 0
@@ -176,9 +176,11 @@ class Filter:
 def main(snakemake) -> None:
     # Read in input file 
     adata = sc.read_h5ad(snakemake.input[0])
-    
+
     # Filter the data using the provided filter method
-    adata_filtered = Filter(adata, snakemake.params.filter_method)
+    adata_filtered = Filter(adata, 
+                            snakemake.wildcards.filter_method,
+                            **snakemake.params.params)
     adata_filtered.run()
 
     # Write out the file               

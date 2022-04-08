@@ -4,12 +4,13 @@ from snakemake.utils import min_version
 min_version("6.12")
 
 configfile: f"{workflow.basedir}/../config/config.yaml"
+configfile: f"{workflow.basedir}/../config/methods.yaml"
 
-include: "rules/config_file.smk"
+include: "rules/parse_config.smk"
 include: "rules/common.smk"
-include: "rules/preproc.smk"
-include: "rules/dim_reduce.smk"
-include: "rules/cluster.smk"
+include: "rules/io.smk"
+include: "rules/core.smk"
+include: "rules/too_many_cells.smk"
 include: "rules/plot.smk"
 
 localrules: create_all_conda_envs, create_conda_env
@@ -17,13 +18,14 @@ localrules: create_all_conda_envs, create_conda_env
 wildcard_constraints:
     # A can be anything that doesn't contain a 
     # '\', '.',  '/', or a whitespace
-    filter_method = get_wc_constraint('filter_method') + "|tmc_filter",
-    norm_method = get_wc_constraint('norm_method') + "|tmc_norm",
-    dr_method = get_wc_constraint('dim_reduce_method'),
-    c_method = get_wc_constraint('cluster_method'),
+    filter_method = get_wc_constraint('filter') + "|tmc_filter",
+    norm_method = get_wc_constraint('norm') + "|tmc_norm",
+    dr_method = get_wc_constraint('dim_reduce'),
+    c_method = get_wc_constraint('cluster'),
     prior = "[^\\/\.\s]*",
     maketree = "[^\\/\.\s]*",
-    sample = "[^\\/\.\s]*"
+    sample = "[^\\/\.\s]*",
+    params = "[^\\/\s]*"
 
 onstart:
     if not os.path.exists(config['output_dir']):
@@ -40,7 +42,9 @@ rule create_all_conda_envs:
         "cluster_env.done",
         "dim_reduce_env.done",
         "plot_env.done",
-        "preproc_env.done"
+        "io_env.done",
+        "filter_env.done",
+        "norm_env.done"
 
 
 rule create_conda_env:

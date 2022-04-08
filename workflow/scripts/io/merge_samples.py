@@ -44,8 +44,7 @@ def merge_samples(snakemake) -> None:
         obs_tags.append(obs_tag)
 
     merged_adata = adatas[0].concatenate(
-        *adatas[1:], 
-        join='outer',
+        *adatas[1:],
         batch_categories=obs_tags, 
         fill_value=0,
         index_unique=None

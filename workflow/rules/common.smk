@@ -1,4 +1,7 @@
 import os
+import pandas as pd
+import re
+from snakemake.utils import Paramspace
 from typing import List, Union
 
 
@@ -55,16 +58,24 @@ def list_to_str(l: List[str]) -> str:
 
 
 def get_merge_samples_input(wildcards):
-    inputs = []
-    i = 1
-    while exists(f"input_{i}", config['inputs']):
-        inputs.append(
-            (f"{config['output_dir']}/input_{i}/norm/"
-            f"mtx_{wildcards.filter_method}_{wildcards.norm_method}.h5ad")
+    samples = []
+    # i = 1
+    # while exists(f"input_{i}", config['inputs']):
+    #     inputs.append(
+    #         (f"{config['output_dir']}/input_{i}/norm/"
+    #         f"mtx_{wildcards.filter_method}_{wildcards.norm_method}.h5ad")
+    #     )
+    #     i += 1
+
+    for sample_name in config['inputs']:
+        samples.append(
+            (f"{config['output_dir']}/{sample_name}/norm/"
+             f"norm_{wildcards.norm_method}_{wildcards.norm_params}/"
+             f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+             "mtx.h5ad")
         )
-        i += 1
             
-    return inputs
+    return samples
 
 
 def get_h5ad_to_csv_output(wildcards):
@@ -290,3 +301,40 @@ def get_maketree_prior_params(wildcards):
               f"> {output_dir}/cluster.csv")
     
     return params
+
+
+def extract_wildcards(template: str, target: str) -> dict:
+    names = re.findall("{[^{]*}", template)
+    names = [name.strip("{}") for name in names]
+        
+    q = re.sub("{[^{]*}", "(.*)", template)
+    matches = re.search(q, target)
+
+    wildcards = dict()
+    for i,name in enumerate(names):
+        wildcards[name] = matches.group(i+1)
+    return wildcards
+
+
+def get_params_instance(method_name: str, params_str: str, 
+                        method_dict: dict) -> dict:
+    
+    if params_str == 'noparams':
+        return {}
+
+    paramspace = method_dict[method_name].paramspace
+    params_dict = extract_wildcards(paramspace.wildcard_pattern, params_str)
+
+    def convert_value_dtype(name, value):
+        if paramspace.dataframe.dtypes[name] == bool and value == "False":
+            # handle problematic case when boolean False is returned as
+            # boolean True because the string "False" is misinterpreted
+            return False
+        else:
+            return pd.Series([value]).astype(paramspace.dataframe.dtypes[name])[0]
+    
+    return {
+        name: convert_value_dtype(name, value)
+        for name, value in params_dict.items()
+    }
+

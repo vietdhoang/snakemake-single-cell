@@ -1,21 +1,3 @@
-# The rule for clustering.
-# Requires that dimensionality reduction has been run first. 
-# Like the dim_reduce rule, it calls a specified function in cluster.py
-# to perform the clustering. The function is specified by the c_method wildcard.
-rule cluster:
-    input:
-        (f"{config['output_dir']}/{{sample}}/dim_reduce/"
-         f"mtx_{{filter_method}}_{{norm_method}}_{{dr_method}}.h5ad")
-    output:
-        # c_method must be a name of a script in the cluster directory
-        (f"{config['output_dir']}/{{sample}}/cluster/"
-         f"mtx_{{filter_method}}_{{norm_method}}_{{dr_method}}_{{c_method}}.h5ad")
-    conda:
-        "../envs/cluster.yaml"
-    script:
-        "../scripts/cluster/{wildcards.c_method}.py"
-
-
 rule tmc_maketree:
     input:
         get_maketree_input

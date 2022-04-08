@@ -1,0 +1,47 @@
+# Reference list of methods that have been implemented and are ready to use 
+# DO NOT TOUCH UNLESS THE METHOD HAS BEEN IMPLEMENTED
+
+implemented:
+
+  filter:
+    nofilter:
+    IQR:
+      k: 1.5
+    zscore:
+      threshold: 1.96
+    mad: # In development
+      threshold: 2.5
+  
+  norm:
+    nonorm:
+      apply_log: True
+    max:
+      apply_log: True
+    sum:
+      apply_log: True
+    upper_quartile:
+      apply_log: True
+    median:
+      apply_log: True
+    quantile:
+      apply_log: True
+    total_count: # In development
+      apply_log: True
+    log1p:
+  
+  dim_reduce:
+    pca:
+      n_comps: 100
+    umap:
+      n_neighbours: [15, 50]
+      # min_dist: [0.1, 0.5]
+      n_comps: [2, 50]
+    tsne:
+      perplexity: [5, 30, 50]
+      learning_rate: [200, 500, 1000]
+  
+  cluster:
+    leiden:
+      n_neighbours: [15, 50]
+    louvain:
+      n_neighbours: [15, 50]
