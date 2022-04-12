@@ -130,6 +130,26 @@ plot:
   cluster: True
 
 
-# # Alternatively, list the desired output files. This requires knowledge of the 
-# # output directory structure and the file naming conventions for this workflow.
-# other_outputs:
+differential:
+
+  diff1:
+    group1:
+      cell_type: ['brain']
+      leiden: ['1', '2', '3']
+    
+    group2:
+      cell_type: ['brain']
+      leiden: ['4', '5', '6']
+  
+  diff2:
+    one_vs_rest: 'leiden'
+    filters:
+      cell_type: ['brain', 'liver']
+      
+
+
+
+
+# Alternatively, list the desired output files. This requires knowledge of the 
+# output directory structure and the file naming conventions for this workflow.
+other_outputs:

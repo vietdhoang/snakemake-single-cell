@@ -77,3 +77,25 @@ rule cluster:
         "../envs/cluster.yaml"
     script:
         "../scripts/cluster/{params.script}"
+
+
+rule differential:
+    input:
+        (f"{config['output_dir']}/{{sample}}/cluster/"
+         f"cluster_{{c_method}}_{{c_params}}/"
+         f"filter_{{filter_method}}_{{filter_params}}/"
+         f"norm_{{norm_method}}_{{norm_params}}/"
+         f"dim_reduce_{{dr_method}}_{{dr_params}}/mtx.h5ad")
+    output:
+        (f"{config['output_dir']}/{{sample}}/differential/"
+         f"differential_{{diff}}/"
+         f"filter_{{filter_method}}_{{filter_params}}/"
+         f"norm_{{norm_method}}_{{norm_params}}/"
+         f"dim_reduce_{{dr_method}}_{{dr_params}}/"
+         f"cluster_{{c_method}}_{{c_params}}/mtx.h5ad")
+    params:
+        script = "differential/differential.py"
+    conda:
+        "../envs/differential.yaml"
+    script:
+        "../scripts/{params.script}"

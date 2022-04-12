@@ -2,7 +2,7 @@
 # By
 # Gregory W. Schwartz
 
-'''
+"""
 Use:
 
 sys.path.append("/path/to/parent/directory/of/altair_themes.py")
@@ -15,13 +15,13 @@ alt.themes.register("publish_theme", altair_themes.publish_theme)
 
 # enable the newly registered theme
 alt.themes.enable("publish_theme")
-'''
+"""
 
 import altair as alt
 
 
 def publish_theme() -> dict:
-    
+
     # Typography
     font = "Arial"
     labelFont = "Arial"
@@ -40,12 +40,8 @@ def publish_theme() -> dict:
                 "strokeWidth": 0.756,
             },
             "style": {
-                "guide-title": {
-                    "fontSize": fontSize
-                },
-                "guide-label": {
-                    "fontSize": fontSize
-                }
+                "guide-title": {"fontSize": fontSize},
+                "guide-label": {"fontSize": fontSize},
             },
             "title": {
                 "fontSize": fontSize,
