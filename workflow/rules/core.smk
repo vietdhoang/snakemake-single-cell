@@ -72,7 +72,8 @@ rule cluster:
         params = lambda wildcards: get_params_instance(wildcards.c_method,
                                                        wildcards.c_params, 
                                                        get_method_dict('cluster')),
-        representation = lambda wildcards: f"X_{wildcards.dr_method}"
+        # representation = lambda wildcards: f"X_{wildcards.dr_method}"
+        representation = lambda wildcards: f"X"
     conda:
         "../envs/cluster.yaml"
     script:
@@ -94,8 +95,9 @@ rule differential:
          f"dim_reduce_{{dr_method}}_{{dr_params}}/"
          f"cluster_{{c_method}}_{{c_params}}/mtx.h5ad")
     params:
-        script = "differential/differential.py"
+        script = get_differential_script,
+        params = lambda wildcards: config['differential'][wildcards.diff]
     conda:
         "../envs/differential.yaml"
     script:
-        "../scripts/{params.script}"
+        "../scripts/differential/{params.script}"

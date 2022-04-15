@@ -1,22 +1,22 @@
 # Example config file for end user.
 
-# # User-defined input. The path must be either absolute or relative to the 
-# # working directory.
+# User-defined input. The path must be either absolute or relative to the 
+# working directory.
 # inputs:
 #   input_1:
 #     data_path: "/home/viethoang/data/pbmc/pbmc1/"
 #     label_path: "/home/viethoang/data/pbmc/pbmc1/labels.csv"
 #     obs_tag: "1"
 
-#   # input_2:
-#   #   data_path: "/home/viethoang/data/pbmc/pbmc2/"
-#   #   label_path: "/home/viethoang/data/pbmc/pbmc2/labels.csv"
-#   #   obs_tag: "2"
+  # input_2:
+  #   data_path: "/home/viethoang/data/pbmc/pbmc2/"
+  #   label_path: "/home/viethoang/data/pbmc/pbmc2/labels.csv"
+  #   obs_tag: "2"
   
-#   # input_3:
-#   #   data_path: "/home/viethoang/data/pbmc/pbmc3/"
-#   #   label_path: "/home/viethoang/data/pbmc/pbmc3/labels.csv"
-#   #   obs_tag: "3"
+  # input_3:
+  #   data_path: "/home/viethoang/data/pbmc/pbmc3/"
+  #   label_path: "/home/viethoang/data/pbmc/pbmc3/labels.csv"
+  #   obs_tag: "3"
 
 
 # User-defined input. The path must be either absolute or relative to the 
@@ -70,7 +70,7 @@ filter:
 norm:
   # nonorm:
   # max:
-  sum:
+  # sum:
   # upper_quartile:
   median:
   # quantile:
@@ -83,9 +83,12 @@ norm:
 # If this is left empty or is deleted, dimensionality reduction as well as 
 # everything downstream will not run (ex. clustering).
 dim_reduce:
-  pca:
+  # pca:
   umap:
-  tsne:
+    n_neighbours: 50
+      # min_dist: [0.1, 0.5]
+    n_comps: 2
+  # tsne:
 
 
 # List the clustering method(s) that will be used.
@@ -93,35 +96,36 @@ dim_reduce:
 # If this is left empty or is deleted, no clustering will be performed.
 cluster:
   leiden:
+    n_neighbours: 50
   # louvain:
+  #   n_neighbours: 50
 
+too-many-cells:
 
-# too-many-cells:
-
-#   make-tree-1:
-#     tmc_qc: True    
-#     options:    
-#       - --filter-thresholds "(200, 1)"
-#       - --draw-collection "PieRing"
+  make-tree-1:
+    tmc_qc: True    
+    options:    
+      - --filter-thresholds "(200, 1)"
+      - --draw-collection "PieRing"
   
-#   make-tree-2:    
-#     prior: "make-tree-1"
-#     options:
-#       - --draw-node-number
-#       - --dendrogram-output "tree-node-numbers.svg"
-#       - --draw-collection "PieRing"
-#       - --min-size 1
-#       - --smart-cutoff 4
+  make-tree-2:    
+    prior: "make-tree-1"
+    options:
+      - --draw-node-number
+      - --dendrogram-output "tree-node-numbers.svg"
+      - --draw-collection "PieRing"
+      - --min-size 1
+      - --smart-cutoff 4
 
-#   make-tree-3:
-#     tmc_qc: False
-#     options:
-#       - --draw-collection "PieRing"
+  make-tree-3:
+    tmc_qc: False
+    options:
+      - --draw-collection "PieRing"
   
-#   make-tree-4:
-#     prior: "make-tree-3"
-#     options:
-#       - --draw-collection "PieRing"
+  make-tree-4:
+    prior: "make-tree-3"
+    options:
+      - --draw-collection "PieRing"
 
 
 plot:
@@ -134,17 +138,20 @@ differential:
 
   diff1:
     group1:
-      cell_type: ['brain']
-      leiden: ['1', '2', '3']
-    
+      leiden: ['1']    
     group2:
-      cell_type: ['brain']
-      leiden: ['4', '5', '6']
+      leiden: ['2', '3']    
+    stat_test: "mannwhitneyu"    
+    multiple_comparisons: "fdr_bh"
+    alpha: 0.05
   
   diff2:
-    one_vs_rest: 'leiden'
+    one_vs_rest: 'leiden'    
     filters:
-      cell_type: ['brain', 'liver']
+      # cell_type: ['brain', 'liver']    
+    stat_test: "mannwhitneyu"    
+    multiple_comparisons: "fdr_bh"
+    alpha: 0.05
       
 
 

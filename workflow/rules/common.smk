@@ -59,14 +59,7 @@ def list_to_str(l: List[str]) -> str:
 
 def get_merge_samples_input(wildcards):
     samples = []
-    # i = 1
-    # while exists(f"input_{i}", config['inputs']):
-    #     inputs.append(
-    #         (f"{config['output_dir']}/input_{i}/norm/"
-    #         f"mtx_{wildcards.filter_method}_{wildcards.norm_method}.h5ad")
-    #     )
-    #     i += 1
-
+    
     for sample_name in config["inputs"]:
         samples.append(
             (
@@ -85,7 +78,7 @@ def get_h5ad_to_csv_output(wildcards):
     output = [
         (
             f"{config['output_dir']}/{wildcards.sample}/"
-            f"{wildcards.pipeline_stage}/{wildcards.basename}_mtx.csv"
+            f"{wildcards.pipeline_stage}/{wildcards.basename}/mtx.csv"
         )
     ]
 
@@ -93,7 +86,7 @@ def get_h5ad_to_csv_output(wildcards):
         expand(
             (
                 f"{config['output_dir']}/{wildcards.sample}/"
-                f"{wildcards.pipeline_stage}/{wildcards.basename}_{{label}}.csv"
+                f"{wildcards.pipeline_stage}/{wildcards.basename}/{{label}}.csv"
             ),
             label=config["labels"],
         )
@@ -107,7 +100,7 @@ def get_maketree_input(wildcards):
     inputs = []
 
     # If the user decides to not skip the preprocessing of too-many-cells
-    if wildcards.norm_method == "tmc_norm":
+    if wildcards.norm_method == "tmc":
         #  If the sample's name is not "merged"
         if wildcards.sample == "merged":
             # Append the path of all inputs
@@ -139,8 +132,10 @@ def get_maketree_input(wildcards):
         # Append qc'd matrix csv file to inputs
         inputs.append(
             (
-                f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
-                f"mtx_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+                f"{config['output_dir']}/{wildcards.sample}/norm/"
+                f"norm_{wildcards.norm_method}_{wildcards.norm_params}/"
+                f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+                f"h5ad2csv/mtx.csv"
             )
         )
 
@@ -154,16 +149,20 @@ def get_maketree_input(wildcards):
             if exists("label_path", config["inputs"][first_input]):
                 inputs.append(
                     (
-                        f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
-                        f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+                        f"{config['output_dir']}/{wildcards.sample}/norm/"
+                        f"norm_{wildcards.norm_method}_{wildcards.norm_params}/"
+                        f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+                        f"h5ad2csv/label.csv"
                     )
                 )
 
         elif exists("label_path", config["inputs"][wildcards.sample]):
             inputs.append(
                 (
-                    f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
-                    f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+                    f"{config['output_dir']}/{wildcards.sample}/norm/"
+                    f"norm_{wildcards.norm_method}_{wildcards.norm_params}/"
+                    f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+                    f"h5ad2csv/label.csv"
                 )
             )
 
@@ -181,7 +180,7 @@ def get_maketree_params(wildcards):
     first_input = [*config["inputs"].keys()][0]
 
     # If the user decides to not skip the preprocessing of too-many-cells
-    if wildcards.norm_method == "tmc_norm":
+    if wildcards.norm_method == "tmc":
         # If the sample's name is not "merged"
         if wildcards.sample == "merged":
             for input in config["inputs"]:
@@ -217,8 +216,10 @@ def get_maketree_params(wildcards):
         inputs.append(
             (
                 f"--matrix-path "
-                f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
-                f"mtx_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+                f"{config['output_dir']}/{wildcards.sample}/norm/"
+                f"norm_{wildcards.norm_method}_{wildcards.norm_params}/"
+                f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+                f"h5ad2csv/mtx.csv"
             )
         )
 
@@ -232,8 +233,10 @@ def get_maketree_params(wildcards):
                 inputs.append(
                     (
                         f"--labels-file "
-                        f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
-                        f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+                        f"{config['output_dir']}/{wildcards.sample}/norm/"
+                        f"norm_{wildcards.norm_method}_{wildcards.norm_params}/"
+                        f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+                        f"h5ad2csv/label.csv"
                     )
                 )
 
@@ -241,16 +244,19 @@ def get_maketree_params(wildcards):
             inputs.append(
                 (
                     f"--labels-file "
-                    f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
-                    f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+                    f"{config['output_dir']}/{wildcards.sample}/norm/"
+                    f"norm_{wildcards.norm_method}_{wildcards.norm_params}/"
+                    f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+                    f"h5ad2csv/label.csv"
                 )
             )
 
     inputs_str = " ".join(inputs)
     options_str = " ".join(options)
     output_dir = (
-        f"{config['output_dir']}/{wildcards.sample}/too-many-cells/"
-        f"{wildcards.maketree}/{wildcards.filter_method}/{wildcards.norm_method}"
+        f"{config['output_dir']}/{wildcards.sample}/too-many-cells/{wildcards.maketree}/"
+        f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+        f"norm_{wildcards.norm_method}_{wildcards.norm_params}/"
     )
 
     params = (
@@ -268,7 +274,7 @@ def get_maketree_prior_params(wildcards):
     # Get the first input (input_1)
     first_input = [*config["inputs"].keys()][0]
 
-    if wildcards.norm_method == "tmc_norm":
+    if wildcards.norm_method == "tmc":
         if wildcards.sample == "merged":
             if exists("label_path", config["inputs"][first_input]):
                 options.insert(
@@ -290,8 +296,10 @@ def get_maketree_prior_params(wildcards):
                     0,
                     (
                         f"--labels-file "
-                        f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
-                        f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+                        f"{config['output_dir']}/{wildcards.sample}/norm/"
+                        f"norm_{wildcards.norm_method}_{wildcards.norm_params}/"
+                        f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+                        f"h5ad2csv/label.csv"
                     ),
                 )
 
@@ -300,21 +308,26 @@ def get_maketree_prior_params(wildcards):
                 0,
                 (
                     f"--labels-file "
-                    f"{config['output_dir']}/{wildcards.sample}/norm/h5ad2csv/"
-                    f"label_{wildcards.filter_method}_{wildcards.norm_method}.csv"
+                    f"{config['output_dir']}/{wildcards.sample}/norm/"
+                    f"norm_{wildcards.norm_method}_{wildcards.norm_params}/"
+                    f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+                    f"h5ad2csv/label.csv"
                 ),
             )
 
     prior = (
-        f"{config['output_dir']}/{wildcards.sample}/too-many-cells/"
-        f"{wildcards.prior}/{wildcards.filter_method}/{wildcards.norm_method}"
+         f"{config['output_dir']}/{wildcards.sample}/too-many-cells/{wildcards.prior}/"
+         f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+         f"norm_{wildcards.norm_method}_{wildcards.norm_params}"
     )
 
     options_str = " ".join(options)
 
     output_dir = (
         f"{config['output_dir']}/{wildcards.sample}/too-many-cells/"
-        f"{wildcards.maketree}/{wildcards.filter_method}/{wildcards.norm_method}"
+        f"{wildcards.maketree}/"
+        f"filter_{wildcards.filter_method}_{wildcards.filter_params}/"
+        f"norm_{wildcards.norm_method}_{wildcards.norm_params}"
     )
 
     params = (
@@ -340,7 +353,7 @@ def extract_wildcards(template: str, target: str) -> dict:
 
 def get_params_instance(method_name: str, params_str: str, method_dict: dict) -> dict:
 
-    if params_str == "noparams":
+    if params_str == "noparams" or params_str == "untrackedparams":
         return {}
 
     paramspace = method_dict[method_name].paramspace

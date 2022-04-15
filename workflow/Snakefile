@@ -18,8 +18,8 @@ localrules: create_all_conda_envs, create_conda_env
 wildcard_constraints:
     # A can be anything that doesn't contain a 
     # '\', '.',  '/', or a whitespace
-    filter_method = get_wc_constraint('filter') + "|tmc_filter",
-    norm_method = get_wc_constraint('norm') + "|tmc_norm",
+    filter_method = get_wc_constraint('filter') + "|tmc",
+    norm_method = get_wc_constraint('norm') + "|tmc",
     dr_method = get_wc_constraint('dim_reduce'),
     c_method = get_wc_constraint('cluster'),
     prior = "[^\\/\.\s]*",
@@ -44,7 +44,8 @@ rule create_all_conda_envs:
         "plot_env.done",
         "io_env.done",
         "filter_env.done",
-        "norm_env.done"
+        "norm_env.done",
+        "differential_env.done"
 
 
 rule create_conda_env:

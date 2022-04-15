@@ -122,7 +122,7 @@ class Filter:
         return adata
 
     @staticmethod
-    def basic_filter(adata: AnnData, min_genes: int = 1, min_cells: int = 1) -> AnnData:
+    def basic_filter(adata: AnnData, min_genes: int = 2, min_cells: int = 2) -> AnnData:
         sc.pp.filter_cells(adata, min_genes=min_genes)
         sc.pp.filter_genes(adata, min_cells=min_cells)
 

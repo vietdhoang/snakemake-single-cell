@@ -263,8 +263,8 @@ def get_too_many_cells_output():
                             parent_dir
                             / "too-many-cells"
                             / key
-                            / "tmc_filter"
-                            / "tmc_norm"
+                            / "filter_tmc_untrackedparams"
+                            / "norm_tmc_untrackedparams"
                             / f"{dict_tmc[key]['prior']}.prior.{key}.done"
                         )
 
@@ -289,8 +289,8 @@ def get_too_many_cells_output():
                             parent_dir
                             / "too-many-cells"
                             / key
-                            / "tmc_filter"
-                            / "tmc_norm"
+                            / "filter_tmc_untrackedparams"
+                            / "norm_tmc_untrackedparams"
                             / f"{key}.done"
                         )
                 else:
@@ -369,3 +369,13 @@ def get_method_dict(method_type: str) -> dict:
         method_dict[method.name] = method
 
     return method_dict
+
+
+def get_differential_script(wildcards) -> str:
+    diff = config['differential'][wildcards.diff]
+
+    if exists("script", diff):
+        return diff['script']
+    else:
+        return "differential.py"
+    

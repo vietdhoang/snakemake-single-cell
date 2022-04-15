@@ -85,7 +85,7 @@ class Cluster:
         )
 
         # Cluster the data
-        sc.tl.leiden(adata, neighbors_key="neighbors_louvain")
+        sc.tl.louvain(adata, neighbors_key="neighbors_louvain")
 
         return adata
 

@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  
+dependencies:
+  - python=3.10
+  - fire=0.4.0
+  - scanpy=1.8.2
+  - statsmodels=0.13.2
