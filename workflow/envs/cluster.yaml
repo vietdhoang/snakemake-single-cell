@@ -6,4 +6,5 @@ dependencies:
   - fire=0.4.0
   - leidenalg=0.8.8
   - louvain=0.7.1
-  - scanpy=1.8.2
+  - scanpy=1.9.1
+  - scikit-learn=1.0.2

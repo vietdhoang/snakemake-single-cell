@@ -8,8 +8,8 @@ from os.path import dirname
 from typing import Callable, Tuple
 
 # Add the scripts directory to Python path and import local files in scripts/
-sys.path.insert(0, dirname(dirname(dirname(__file__))))
-import scripts.common.filter_cutoffs as filter_cutoffs
+sys.path.insert(0, dirname(dirname(__file__)))
+import filter_cutoffs
 
 # Set verbosity to 0 which means only print out errors
 sc.settings.verbosity = 0
@@ -27,11 +27,23 @@ class Filter:
             raise NotImplementedError("{method_name} has not been implemented")
 
         self.method_kwargs = kwargs
-        self.adata = adata
+        self.adata = Filter._get_qc_metrics(adata)
 
     def run(self) -> None:
         self.adata = Filter.basic_filter(self.adata)
         self.adata = self.method(self.adata, **self.method_kwargs)
+
+    @staticmethod
+    def _get_qc_metrics(adata: AnnData) -> AnnData:
+        # Add an annotation labeling mitochondrial genes
+        adata.var["mt"] = adata.var_names.str.startswith("MT-")
+
+        # Calculate QC metrics. These will be used for filtering
+        sc.pp.calculate_qc_metrics(
+            adata, qc_vars=["mt"], percent_top=None, log1p=False, inplace=True
+        )
+
+        return adata
 
     @staticmethod
     def _query(

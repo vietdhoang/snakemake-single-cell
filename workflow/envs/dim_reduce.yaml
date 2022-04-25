@@ -5,4 +5,4 @@ dependencies:
   - python=3.10
   - fire=0.4.0
   - multicore-tsne=0.1
-  - scanpy=1.8.2
+  - scanpy=1.9.1

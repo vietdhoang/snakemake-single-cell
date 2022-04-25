@@ -7,18 +7,6 @@ import sys
 from typing import List, Union
 
 
-def _get_qc_metrics(adata) -> None:
-    # Add an annotation labeling mitochondrial genes
-    adata.var["mt"] = adata.var_names.str.startswith("MT-")
-
-    # Calculate QC metrics. These will be used for filtering
-    sc.pp.calculate_qc_metrics(
-        adata, qc_vars=["mt"], percent_top=None, log1p=False, inplace=True
-    )
-
-    return adata
-
-
 def mtx_to_h5ad(
     path_in: Union[str, bytes, os.PathLike],
     path_out: Union[str, bytes, os.PathLike],
@@ -48,10 +36,10 @@ def mtx_to_h5ad(
         df_labels = pd.read_csv(path_label, index_col=0)
 
         for col_name in labels:
-            adata.obs[col_name] = df_labels[col_name].astype("category")
+            adata.obs[col_name] = pd.Categorical(df_labels[col_name])
 
-    adata = _get_qc_metrics(adata)
-
+    adata = adata[0:1000, :]
+    print(adata)
     if os.path.splitext(path_out)[1] == ".h5ad":
         adata.write(path_out)
 

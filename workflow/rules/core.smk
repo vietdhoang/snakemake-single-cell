@@ -73,7 +73,7 @@ rule cluster:
                                                        wildcards.c_params, 
                                                        get_method_dict('cluster')),
         # representation = lambda wildcards: f"X_{wildcards.dr_method}"
-        representation = lambda wildcards: f"X"
+        representation = get_representation
     conda:
         "../envs/cluster.yaml"
     script:

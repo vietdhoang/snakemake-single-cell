@@ -257,7 +257,7 @@ def get_too_many_cells_output():
         if "make-tree" in key:
             # If make-tree uses a prior
             if exists("prior", dict_tmc[key]):
-                if dict_tmc[dict_tmc[key]["prior"]]["tmc_qc"]:
+                if exists("tmc_qc", dict_tmc[dict_tmc[key]["prior"]]):
                     for parent_dir in get_samples_basenames():
                         output_files.append(
                             parent_dir
@@ -378,4 +378,12 @@ def get_differential_script(wildcards) -> str:
         return diff['script']
     else:
         return "differential.py"
+
+
+def get_representation(wildcards) -> str:
+
+    if wildcards.c_method == "leiden" or wildcards.c_method == "louvain":
+        return "X"
+    else:
+        return f"X_{wildcards.dr_method}"
     

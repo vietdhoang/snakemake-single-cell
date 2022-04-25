@@ -6,8 +6,8 @@ from anndata import AnnData
 from os.path import dirname
 
 # Add the scripts directory to Python path and import local files in scripts/
-sys.path.insert(0, dirname(dirname(dirname(__file__))))
-import scripts.common.sparse_norm as sparse_norm
+sys.path.insert(0, dirname(dirname(__file__)))
+import sparse_norm
 
 
 class Norm:

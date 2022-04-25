@@ -45,3 +45,5 @@ implemented:
       n_neighbours: [15, 50]
     louvain:
       n_neighbours: [15, 50]
+    kmeans:
+      n_clusters: 8

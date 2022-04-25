@@ -12,11 +12,11 @@ from os.path import dirname
 from typing import Final, List, Union
 
 # Add the scripts directory to Python path and import local files in scripts/
-sys.path.insert(0, dirname(dirname(dirname(__file__))))
-import scripts.common.altair_themes
+sys.path.insert(0, dirname(dirname(__file__)))
+import plot.altair_themes
 
 # Import altair theme from altair_themes.py
-alt.themes.register("publish_theme", scripts.common.altair_themes.publish_theme)
+alt.themes.register("publish_theme", plot.altair_themes.publish_theme)
 alt.themes.enable("publish_theme")
 
 
@@ -44,6 +44,20 @@ def get_colour_scheme(colours: List[str], num_colours: int) -> List[str]:
         scheme = cmap(np.linspace(0, 1, num_colours))
 
         return [to_hex(c, keep_alpha=False) for c in scheme]
+
+
+def exists(key: str, dictionary: dict) -> bool:
+    """Helper function to determine if a key exists in a
+    dictionary and isn't empty.
+
+    Args:
+        key: A key that is potentially in the dictionary
+        dictionary: the dictionary that will be searched
+
+    Returns:
+        True if the key exists in the dictionary and the entry is not empty.
+    """
+    return key in dictionary and dictionary[key]
 
 
 def scatter(
@@ -77,13 +91,16 @@ def scatter(
             selection = alt.selection_multi(fields=[label], bind="legend")
             scheme = get_colour_scheme([*SET1.values()], df[label].nunique())
 
-            if label in [*snakemake.config["cluster"]]:
-                sort = [
-                    *map(
-                        lambda x: str(x),
-                        sorted(map(lambda x: int(x), df[label].unique())),
-                    )
-                ]
+            if exists("cluster", snakemake.config):
+                if label in [*snakemake.config["cluster"]]:
+                    sort = [
+                        *map(
+                            lambda x: str(x),
+                            sorted(map(lambda x: int(x), df[label].unique())),
+                        )
+                    ]
+                else:
+                    sort = sorted(df[label].unique())
             else:
                 sort = sorted(df[label].unique())
 
@@ -109,7 +126,9 @@ def scatter(
                 .interactive()
             )
 
-            if label in [*snakemake.config["cluster"]]:
+            if exists("cluster", snakemake.config) and label in [
+                *snakemake.config["cluster"]
+            ]:
                 chart.save(f"{path_dir_out}/{prefix}.html")
             else:
                 chart.save(f"{path_dir_out}/{prefix}_{label}.html")
@@ -123,49 +142,6 @@ def scatter(
         ).properties(width=300, height=300).interactive().save(
             f"{path_dir_out}/{prefix}.html"
         )
-
-
-# if __name__ == "__main__":
-#     if 'snakemake' in globals():
-
-#         if snakemake.rule == "plot_scatter_labels":
-#             path_dir_out = (
-#                 f"{snakemake.config['output_dir']}/"
-#                 f"{snakemake.wildcards.sample}/figures/labels/"
-#             )
-#             labels = snakemake.config['labels']
-
-#         elif snakemake.rule == "plot_scatter_dim_reduce":
-#             path_dir_out = (
-#                 f"{snakemake.config['output_dir']}/"
-#                 f"{snakemake.wildcards.sample}/figures/no_labels/"
-#             )
-#             labels = []
-
-#         else:
-#             path_dir_out = (
-#                 f"{snakemake.config['output_dir']}/"
-#                 f"{snakemake.wildcards.sample}/figures/cluster/"
-#             )
-#             labels = [snakemake.wildcards.c_method]
-
-#         prefix = (
-#             f"scatter_{snakemake.wildcards.filter_method}_"
-#             f"{snakemake.wildcards.norm_method}_"
-#             f"{snakemake.wildcards.dr_method}"
-#         )
-#         use_rep = snakemake.wildcards.dr_method
-
-#         scatter(
-#             snakemake.input[0],
-#             path_dir_out,
-#             prefix,
-#             labels,
-#             use_rep
-#         )
-
-#     else:
-#         fire.Fire()
 
 
 if __name__ == "__main__":

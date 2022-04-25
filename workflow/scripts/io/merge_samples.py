@@ -28,7 +28,7 @@ def get_sample_name_from_path(
 
 
 def merge_samples(snakemake) -> None:
-    """Merge two samples into one"""
+    """Merge multiple samples into one"""
     adatas = []
     obs_tags = []
 
@@ -44,7 +44,11 @@ def merge_samples(snakemake) -> None:
         obs_tags.append(obs_tag)
 
     merged_adata = adatas[0].concatenate(
-        *adatas[1:], batch_categories=obs_tags, fill_value=0, index_unique=None
+        *adatas[1:],
+        join="inner",
+        batch_categories=obs_tags,
+        fill_value=0,
+        index_unique=None,
     )
 
     merged_adata.write(snakemake.output[0])

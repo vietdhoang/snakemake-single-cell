@@ -63,17 +63,5 @@ def publish_theme() -> dict:
                 "titleFontSize": fontSize,
                 "titleFontWeight": "normal",
             },
-            # For individual axis
-            # "axisX": {
-            #     "grid": False,
-            #     "domainColor": "#000000",
-            #     "labelFont": labelFont,
-            #     "labelFontSize": fontSize,
-            #     "labelAngle": 0,
-            #     "tickColor": axisColor,
-            #     "titleFont": font,
-            #     "titleFontSize": fontSize,
-            #     "titleFontWeight": "normal",
-            # },
         }
     }
