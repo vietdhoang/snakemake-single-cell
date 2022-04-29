@@ -1,5 +1,3 @@
-# List of functions that parse the config files in config/
-
 import copy
 import itertools
 import os
@@ -12,10 +10,21 @@ from typing import Final, List, Union, Tuple
 
 
 class Sample:
+    """Holds all the necessary information for a sample. A sample is a single entry
+    under config["inputs"] (e.g input_1)
+
+    Attributes:
+        name: The name of the sample (e.g input_1, input_2, etc.)
+        data_path: Path to directory containing the feature barcode matrix for that
+            sample
+        label_path: Path to the label file. A label file is a csv file that contains
+            annotations for the observation. Only categorical/binary variables are
+            allowed.
+        obs_tag: A tag that will be appended to the end of each barcode.
+    """
     def __init__(
         self, name: str, data_path: str, label_path: str, obs_tag: str
     ) -> None:
-
         self.name = name
         self.data_path = Path(data_path)
         self.label_path = Path(label_path)
@@ -23,6 +32,14 @@ class Sample:
 
     @classmethod
     def get_all_samples(cls, config: dict) -> List["__class__"]:
+        """Get all the samples provided in the config file.
+        
+        Args:
+            config: config file in dictionary format.
+        
+        Returns:
+            A list of Sample objects
+        """
 
         samples = []
 
@@ -36,9 +53,16 @@ class Sample:
 
 
 class Method:
-    def __init__(self, method_type: str, name: str) -> None:
-        """Init method for Method class"""
+    """Stores all the important information about a method.
+    
+    Attributes:
+        method_type: The type of method (e.g, filter, norm, cluster, etc.)
+        name: The name of the method (e.g IQR, leiden, etc.)
+        script: The name of the script that will run the method
+        paramspace: An instance of Paramspace for that particular method.
+    """
 
+    def __init__(self, method_type: str, name: str) -> None:
         self.method_type = method_type
         self.name = Method._get_method(method_type, name)
         self.script = Method._get_script(method_type, name)
@@ -46,18 +70,49 @@ class Method:
 
     @staticmethod
     def _get_method(method_type: str, method_name: str) -> str:
+        """Helper method that determines the method from the config file.
+        
+        Args:
+            method_type: The type of method (e.g, filter, norm, cluster, etc.)
+            method_name: The name of the method (e.g IQR, leiden, etc.)
+        
+        Returns:
+            A string representing the method name.
+        """
         is_implemented = method_name in config["implemented"][method_type]
+
+        # If the method_name is a stript, return only the stem
         return method_name if is_implemented else Path(method_name).stem
 
     @staticmethod
     def _get_script(method_type: str, method_name: str) -> str:
+        """Helper method that determines the method script from the config file.
+        
+        Args:
+            method_type: The type of method (e.g, filter, norm, cluster, etc.)
+            method_name: The name of the method (e.g IQR, leiden, etc.)
+        
+        Returns:
+            A string representing the name of the script.
+        """
         is_implemented = method_name in config["implemented"][method_type]
         return f"{method_type}.py" if is_implemented else method_name
 
     @staticmethod
+    """Helper method that determines the method Paramspace from the config file.
+        
+        Args:
+            method_type: The type of method (e.g, filter, norm, cluster, etc.)
+            method_name: The name of the method (e.g IQR, leiden, etc.)
+        
+        Returns:
+            An instance of Paramspace.
+        """
     def _get_paramspace(method_type: str, method_name: str) -> Paramspace:
         is_implemented = method_name in config["implemented"][method_type]
 
+        # If the method exists create a copy of the dictionary of parameters
+        # from the config file. Otherwise, set params to be an empty dictionary
         if config[method_type][method_name]:
             params = copy.deepcopy(config[method_type][method_name])
 
@@ -67,6 +122,9 @@ class Method:
         else:
             params = {}
 
+        # For any parameters that are not applied combinatorially, wrap the parameters
+        # in a one-element list. This is to ensure that all values in the params
+        # dictionary is a list.
         for key, val in params.items():
             if not isinstance(val, list):
                 params[key] = [val]
@@ -79,10 +137,26 @@ class Method:
 
     @classmethod
     def get_methods(cls, method_type: str) -> List["__class__"]:
+        """Retrieve all the methods for a particular method_type.
+        
+        Args:
+            method_type: The type of method (e.g, filter, norm, cluster, etc.)
+
+        Returns:
+            A list of Methods
+        """
         return [cls(method_type, method_name) for method_name in config[method_type]]
 
 
 class Tree:
+    """Helper class that implements a basic tree data structure. This tree
+    implementation is defined recursively. In other words, a node is also a Tree.
+
+    Attributes:
+        data: The data stored at the node.
+        children: A list of children nodes. These nodes are instances of Tree.
+    """
+
     def __init__(self, data: object = None) -> None:
         self.data = data
         self.children = []
@@ -93,6 +167,14 @@ class Tree:
         paths: List["__class__"] = None,
         current_path: List["__class__"] = None,
     ) -> List["__class__"]:
+        """Get all possible paths of the tree starting from the root node and ending
+        at the leaves. This implementation is recursive.
+
+        Args:
+            t: An instance of Tree.
+            paths: An accumulating list of completed paths.
+            current_path: The current path being searched.
+        """
 
         if paths is None:
             paths = []
@@ -100,12 +182,17 @@ class Tree:
         if current_path is None:
             current_path = []
 
+        # If the data is not None, then append the data to the current path
         if t.data is not None:
             current_path.append(t.data)
 
+        # If the current node has no children, then we have reached a leaf node and 
+        # thus the current path is completed. Append this path to paths.
         if len(t.children) == 0:
             paths.append(current_path)
 
+        # If the current node has children, then get the paths from the current node
+        # to the children.
         else:
             for child in t.children:
                 Tree.get_paths(child, paths, list(current_path))
@@ -114,25 +201,61 @@ class Tree:
 
 
 def make_method_tree(methodorder: List[str] = []) -> Tree:
+    """Create a tree of methods and their parameters. This function builds the output
+    directory structure. Each node is the name of the folder. The name of the folder
+    follows the following structure:
+        {method_type}_{method_name}_{parameter_instance}
+    
+    e.g
+        filter_IQR_k~1.5
+    
+    Args:
+        methodorder: A list of method_types that will the determine which method_types
+            will be found higher up on the list. Method_types at the beginnig of the 
+            list will be found closer to the root node. The root node is the first
+            method_type in the list.
+    
+    Returns:
+        A Tree of Methods. Each node stores a Method
+
+    """
 
     method_tree = Tree()
 
-    def helper(tree: Tree, methodorder):
+    def helper(tree: Tree, methodorder) -> None:
+        """Recursive helper function that actually creates the method tree.
+        make_method_tree is just a wrapper.
+
+        Args:
+            tree: The tree being built.
+            methodorder: The order in which the methods will be found in the tree.
+
+        """
+
+        # If there is no methoorder, then don't do anything
         if len(methodorder) == 0:
-            return tree
+            return
 
         method_type = methodorder[0]
 
+        # If the method_type does not exist, then don't proceed any further. The
+        # method tree that was built so far will be returned (by the outer function)
         if not exists(method_type, config):
-            return tree
+            return
 
+        # Go through each method type and append each possible combination of method
+        # and their parameters to the tree.
         for method_name in config[method_type]:
             method = Method(method_type, method_name)
 
+            # If there are no parameters, then indicate "no_params"
             if len([*method.paramspace.instance_patterns]) == 0:
                 tree.children.append(
                     Tree(data=f"{method.method_type}_{method.name}_noparams")
                 )
+
+            # Otherwise, determine all possible parameter combination and append it to 
+            # the tree
             else:
                 for param_instance in method.paramspace.instance_patterns:
                     tree.children.append(
@@ -144,6 +267,7 @@ def make_method_tree(methodorder: List[str] = []) -> Tree:
                         )
                     )
 
+        # Run this function on the next method_type in methodorder
         for child in tree.children:
             helper(child, methodorder[1:])
 
@@ -195,6 +319,25 @@ def parse_methods(
             output_files.append(parent_dir / first_method_type / path / filename)
 
     return output_files
+
+
+def get_method_dict(method_type: str) -> dict:
+    """Get a dictionary containing all the methods for a specific method_type.
+    A method_type for example can be "filter" and a method for filter would be "IQR"
+    """
+
+    # If the method_type does not exist, return an empty dictionary
+    if not exists(method_type, config):
+        return {}
+
+    # Loop through the list of methods and create a dictionary. Each key is a method
+    # name, and each value is an Method instance.
+    method_dict = dict()
+    methods = Method.get_methods(method_type)
+    for method in methods:
+        method_dict[method.name] = method
+
+    return method_dict
 
 
 def get_plots():
@@ -322,13 +465,53 @@ def get_differential_output() -> List[str]:
         for method_param_path in Tree.get_paths(method_tree):
             path = "/".join(method_param_path)
             for diff in [*config["differential"].keys()]:
-                output_files.append(
-                    parent_dir
-                    / "differential"
-                    / f"differential_{diff}"
-                    / path
-                    / "mtx.h5ad"
-                )
+                diff_dict = config["differential"][diff]
+                
+                if "one_vs_rest" in diff_dict:
+                    if diff_dict["one_vs_rest"] in [*config["cluster"].keys()]
+                        if diff_dict["one_vs_rest"] in path:                
+                            output_files.append(
+                                parent_dir
+                                / "differential"
+                                / f"differential_{diff}"
+                                / path
+                                / "mtx.h5ad"
+                            )
+                        else:
+                            continue
+                    else:
+                        if "filters" in diff_dict["one_vs_rest"]:
+                            s1 = set([*diff_dict["one_vs_rest"]["filters"].keys()])
+                            set_cluster = set([*config["cluster"].keys])
+                            if len(s1.intersection(set_cluster)) != 0:
+                                cluster_method = list(s1.intersection(set_cluster))[0]
+                                if cluster_method is path:
+                                    output_files.append(
+                                        parent_dir
+                                        / "differential"
+                                        / f"differential_{diff}"
+                                        / path
+                                        / "mtx.h5ad"
+                                    )
+                                else:
+                                    continue 
+                elif "group1" in diff_dict and "group2" in diff_dict:
+                    s1 = set([*diff_dict["group1"].keys()])
+                    s2 = set([*diff_dict["group2"].keys()])
+                    set_cluster = set([*config["cluster"].keys])                   
+                    
+                    if len(s1.intersection(s2, set_cluster)) != 0:
+                        cluster_method = list(s1.intersection(s2, set_cluster))[0]
+                        if cluster_method is path:
+                            output_files.append(
+                                parent_dir
+                                / "differential"
+                                / f"differential_{diff}"
+                                / path
+                                / "mtx.h5ad"
+                            )
+                        else:
+                            continue
 
     return output_files
 
@@ -356,34 +539,4 @@ def get_final_output() -> List[str]:
     output_files.extend(get_differential_output())
 
     return output_files
-
-
-def get_method_dict(method_type: str) -> dict:
-    if not exists(method_type, config):
-        return {}
-
-    method_dict = dict()
-
-    methods = Method.get_methods(method_type)
-    for method in methods:
-        method_dict[method.name] = method
-
-    return method_dict
-
-
-def get_differential_script(wildcards) -> str:
-    diff = config['differential'][wildcards.diff]
-
-    if exists("script", diff):
-        return diff['script']
-    else:
-        return "differential.py"
-
-
-def get_representation(wildcards) -> str:
-
-    if wildcards.c_method == "leiden" or wildcards.c_method == "louvain":
-        return "X"
-    else:
-        return f"X_{wildcards.dr_method}"
     

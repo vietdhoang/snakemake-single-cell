@@ -1,5 +1,6 @@
 # Reference list of methods that have been implemented and are ready to use 
 # DO NOT TOUCH UNLESS THE METHOD HAS BEEN IMPLEMENTED
+# Default parameters have also been added
 
 implemented:
 
@@ -34,7 +35,7 @@ implemented:
       n_comps: 100
     umap:
       n_neighbours: [15, 50]
-      # min_dist: [0.1, 0.5]
+      min_dist: [0.1, 0.5]
       n_comps: [2, 50]
     tsne:
       perplexity: [5, 30, 50]

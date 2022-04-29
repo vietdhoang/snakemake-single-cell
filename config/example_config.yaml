@@ -1,0 +1,102 @@
+# Example config file for end user.
+
+# User-defined input. The path must be either absolute or relative to the 
+# working directory.
+inputs:
+  input_1:
+    data_path: "/data/pbmc/sample1/"
+    label_path: "/data/pbmc/sample1/labels.csv"
+    obs_tag: "s1"
+
+  input_2:
+    data_path: "/data/pbmc/sample2/"
+    label_path: "/data/pbmc/sample2/labels.csv"
+    obs_tag: "s2"
+
+# From the labels.csv file, specify which columns are desired.
+labels: ["label"]
+
+# Whether or not to run the pipeline on each input individualy AND on the merged
+# dataset. If false, then the pipeline will only be run on the merged dataset. 
+run_on_each_sample: False
+
+# Name of output directory. The path must be either absolute or relative to the
+# working directory
+output_dir: "/data/pbmc/single-cell-out-test"
+
+
+# List the filter method(s) that will be used. 
+filter:
+  IQR:
+    k: 1.5
+
+
+# List the normalization method(s) that will be used.
+norm:
+  median:
+  quantile:
+
+
+# List the dimensionality reduction method(s) that will be used.
+dim_reduce:
+  pca:
+    n_comps: 100
+  umap:
+    n_neighbours: 50
+    min_dist: [0.1, 0.5]
+    n_comps: 2
+  tsne:
+
+
+# List the clustering method(s) that will be used.
+cluster:
+  leiden:
+  louvain:
+
+
+# Define too-many-cells trees to be generated
+too-many-cells:
+
+  make-tree-1:
+    tmc_qc: False
+    options:
+      - --draw-collection "PieChart"
+  
+make-tree-2:
+  prior: "make-tree-1"
+  options:
+    - --draw-collection "PieChart""
+    - --draw-scale-saturation 10
+
+
+# Specify what kind of plots will be generated
+plot:
+  use_labels: True   
+  dim_reduce: True
+  cluster: True
+
+
+# Define differential expression analyses
+differential:
+
+  diff1:
+    one_vs_rest: 'leiden'    
+    filters:
+      cell_type: ['brain', 'liver']    
+    stat_test: "mannwhitneyu"    
+    multiple_comparisons: "fdr_bh"
+    alpha: 0.05
+  
+  diff2:
+    group1:
+      leiden: ['1']    
+    group2:
+      leiden: ['2', '3']    
+    stat_test: "mannwhitneyu"    
+    multiple_comparisons: "fdr_bh"
+    alpha: 0.05
+      
+
+# Alternatively, list the desired output files. This requires knowledge of the 
+# output directory structure and the file naming conventions for this workflow.
+other_outputs:

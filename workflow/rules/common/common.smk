@@ -1,65 +1,27 @@
+import copy
+import itertools
 import os
 import pandas as pd
+import pathlib
 import re
+
+from pathlib import Path
 from snakemake.utils import Paramspace
-from typing import List, Union
+from typing import Final, List, Union, Tuple
 
 
-def get_wc_constraint(key: str) -> str:
-    """Determine wildcard constraints for wildcards that are dependent on
-    entries in the config file. For example, the qc wildcard should be
-    constrained to the entries under qc_method in the config file.
+def get_merge_samples_input(wildcards) -> List[str]:
+    """Determines the input files for the rule merge_samples
 
     Args:
-        key: A key for the config dictionary
-
-    Returns:
-        A regex string that defines the wild constraint associated with
-        config[key]
-    """
-    if exists(key, config):
-        constraint = "|".join(config[key])
-        return f"({constraint})"
-
-    # If key does not exist in the config file, return the regex below instead.
-    # This is the default regex: anything that doesn't contain a
-    # '\', '.',  '/', or a whitespace
-    else:
-        return "[^\\/\.\s]*"
-
-
-def exists(key: str, dictionary: dict) -> bool:
-    """Helper function to determine if a key exists in a
-    dictionary and isn't empty.
-
-    Args:
-        key: A key that is potentially in the dictionary
-        dictionary: the dictionary that will be searched
-
-    Returns:
-        True if the key exists in the dictionary and the entry is not empty.
-    """
-    return key in dictionary and dictionary[key]
-
-
-def list_to_str(l: List[str]) -> str:
-    """Helper function that converts a list to a string literal. This is used
-    to help Fire to parse lists as input in the command line. See rule scatter
-    in rules/plot.smk for an example.
-
-    Args:
-        l: list of strings that will be converted into a string
-
-    Returns:
-        The list as a string
-    """
-    l_str = ",".join(l)
-    return f'"[{l_str}]"'
-
-
-def get_merge_samples_input(wildcards):
-    samples = []
+        wildcards: A snakemake object that holds all the wildcards.
     
+    Returns:
+        A list of required input files
+    """
+    # Go through the list of samples and add the normalized and filtered version of 
+    # that sample to the list of desired inputs
+    samples = []
     for sample_name in config["inputs"]:
         samples.append(
             (
@@ -73,29 +35,15 @@ def get_merge_samples_input(wildcards):
     return samples
 
 
-def get_h5ad_to_csv_output(wildcards):
-
-    output = [
-        (
-            f"{config['output_dir']}/{wildcards.sample}/"
-            f"{wildcards.pipeline_stage}/{wildcards.basename}/mtx.csv"
-        )
-    ]
-
-    output.extend(
-        expand(
-            (
-                f"{config['output_dir']}/{wildcards.sample}/"
-                f"{wildcards.pipeline_stage}/{wildcards.basename}/{{label}}.csv"
-            ),
-            label=config["labels"],
-        )
-    )
-
-    return output
-
-
 def get_maketree_input(wildcards):
+    """Determines the input files for the rule tmc_maketree
+
+    Args:
+        wildcards: A snakemake object that holds all the wildcards.
+    
+    Returns:
+        A list of required input files
+    """
 
     inputs = []
 
@@ -170,6 +118,22 @@ def get_maketree_input(wildcards):
 
 
 def get_maketree_params(wildcards):
+    """Parses the options for maketree.
+
+    Args:
+        wildcards: A snakemake object that holds all the wildcards.
+    
+    Returns:
+        A string representing all the options selected for too-many-cells maketree.
+        These options are in the correct format for too-many-cell's command line tool.
+        For example, if this function outputs the string s, then too-many-cells will
+        be executed as such:
+
+        too-many-cells make-tree s
+
+        As an example, s could be:        
+        s = "--matrix-path input --labels-file labels.csv --output out > clusters.csv"
+    """
 
     # Get the list of user-selected options from the config file
     options = config["too-many-cells"][wildcards.maketree]["options"]
@@ -267,6 +231,22 @@ def get_maketree_params(wildcards):
 
 
 def get_maketree_prior_params(wildcards):
+    """Parses the options for maketree with a prior.
+
+    Args:
+        wildcards: A snakemake object that holds all the wildcards.
+    
+    Returns:
+        A string representing all the options selected for too-many-cells maketree
+        using a prior.These options are in the correct format for too-many-cell's 
+        command line tool. For example, if this function outputs the string s, then 
+        too-many-cells will be executed as such:
+
+        too-many-cells make-tree s
+
+        As an example, s could be:        
+        s = "--prior out --labels-file labels.csv --output out2 > clusters.csv"
+    """
 
     # Get the list of user-selected options from the config file
     options = config["too-many-cells"][wildcards.maketree]["options"]
@@ -338,35 +318,20 @@ def get_maketree_prior_params(wildcards):
     return params
 
 
-def extract_wildcards(template: str, target: str) -> dict:
-    names = re.findall("{[^{]*}", template)
-    names = [name.strip("{}") for name in names]
+def get_differential_script(wildcards) -> str:
+    diff = config['differential'][wildcards.diff]
 
-    q = re.sub("{[^{]*}", "(.*)", template)
-    matches = re.search(q, target)
-
-    wildcards = dict()
-    for i, name in enumerate(names):
-        wildcards[name] = matches.group(i + 1)
-    return wildcards
+    if exists("script", diff):
+        return diff['script']
+    else:
+        return "differential.py"
 
 
-def get_params_instance(method_name: str, params_str: str, method_dict: dict) -> dict:
+def get_representation(wildcards) -> str:
 
-    if params_str == "noparams" or params_str == "untrackedparams":
-        return {}
+    if wildcards.c_method == "leiden" or wildcards.c_method == "louvain":
+        return "X"
+    else:
+        return f"X_{wildcards.dr_method}"
 
-    paramspace = method_dict[method_name].paramspace
-    params_dict = extract_wildcards(paramspace.wildcard_pattern, params_str)
 
-    def convert_value_dtype(name, value):
-        if paramspace.dataframe.dtypes[name] == bool and value == "False":
-            # handle problematic case when boolean False is returned as
-            # boolean True because the string "False" is misinterpreted
-            return False
-        else:
-            return pd.Series([value]).astype(paramspace.dataframe.dtypes[name])[0]
-
-    return {
-        name: convert_value_dtype(name, value) for name, value in params_dict.items()
-    }

@@ -1,13 +1,13 @@
 import glob
 import os
 from snakemake.utils import min_version
-min_version("6.12")
+min_version("7.4")
 
-configfile: f"{workflow.basedir}/../config/config.yaml"
 configfile: f"{workflow.basedir}/../config/methods.yaml"
 
-include: "rules/parse_config.smk"
-include: "rules/common.smk"
+include: "rules/common/common.smk"
+include: "rules/common/outputs.smk"
+include: "rules/common/utils.smk"
 include: "rules/io.smk"
 include: "rules/core.smk"
 include: "rules/too_many_cells.smk"
@@ -16,16 +16,14 @@ include: "rules/plot.smk"
 localrules: create_all_conda_envs, create_conda_env
 
 wildcard_constraints:
-    # A can be anything that doesn't contain a 
-    # '\', '.',  '/', or a whitespace
-    filter_method = get_wc_constraint('filter') + "|tmc",
-    norm_method = get_wc_constraint('norm') + "|tmc",
-    dr_method = get_wc_constraint('dim_reduce'),
-    c_method = get_wc_constraint('cluster'),
-    prior = "[^\\/\.\s]*",
-    maketree = "[^\\/\.\s]*",
-    sample = "[^\\/\.\s]*",
-    params = "[^\\/\s]*"
+    filter_method = get_wc_constraint(key='filter', add_tmc=True),
+    norm_method = get_wc_constraint(key='norm', add_tmc=True),
+    dr_method = get_wc_constraint(key='dim_reduce'),
+    c_method = get_wc_constraint(key='cluster'),
+    prior = get_wc_constraint(),
+    maketree = get_wc_constraint(),
+    sample = get_wc_constraint(),
+    params = get_wc_constraint()
 
 onstart:
     if not os.path.exists(config['output_dir']):
