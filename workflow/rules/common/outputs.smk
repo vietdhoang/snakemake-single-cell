@@ -99,7 +99,8 @@ class Method:
         return f"{method_type}.py" if is_implemented else method_name
 
     @staticmethod
-    """Helper method that determines the method Paramspace from the config file.
+    def _get_paramspace(method_type: str, method_name: str) -> Paramspace:
+        """Helper method that determines the method Paramspace from the config file.
         
         Args:
             method_type: The type of method (e.g, filter, norm, cluster, etc.)
@@ -108,7 +109,6 @@ class Method:
         Returns:
             An instance of Paramspace.
         """
-    def _get_paramspace(method_type: str, method_name: str) -> Paramspace:
         is_implemented = method_name in config["implemented"][method_type]
 
         # If the method exists create a copy of the dictionary of parameters
@@ -468,7 +468,7 @@ def get_differential_output() -> List[str]:
                 diff_dict = config["differential"][diff]
                 
                 if "one_vs_rest" in diff_dict:
-                    if diff_dict["one_vs_rest"] in [*config["cluster"].keys()]
+                    if diff_dict["one_vs_rest"] in [*config["cluster"].keys()]:
                         if diff_dict["one_vs_rest"] in path:                
                             output_files.append(
                                 parent_dir
@@ -498,7 +498,7 @@ def get_differential_output() -> List[str]:
                 elif "group1" in diff_dict and "group2" in diff_dict:
                     s1 = set([*diff_dict["group1"].keys()])
                     s2 = set([*diff_dict["group2"].keys()])
-                    set_cluster = set([*config["cluster"].keys])                   
+                    set_cluster = set([*config["cluster"].keys()])                   
                     
                     if len(s1.intersection(s2, set_cluster)) != 0:
                         cluster_method = list(s1.intersection(s2, set_cluster))[0]
