@@ -4,7 +4,7 @@
 
 # Snakemake Combinatorial Pipeline
 
-This Snakemake pipeline aims to streamline the process of analyzing single-cell data.   1 
+This Snakemake pipeline aims to streamline the process of analyzing single-cell data 
 by executing each step in a combinatorial manner. More specifically, if multiple
 methods are provided for each stage in the pipeline, this pipeline will automatically 
 execute every possible combination  of methods and their parameters. This feature allows 
